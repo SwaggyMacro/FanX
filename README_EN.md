@@ -39,7 +39,6 @@ FanX is a fan control and monitoring platform built with .NET 8 and Blazor. It p
   - Chinese and English interface options
 
 - Dark/Light theme toggle
-
 - Docker deployment support
 
 ## Requirements
