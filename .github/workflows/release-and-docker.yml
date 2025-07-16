@@ -1,0 +1,129 @@
+﻿name: Build Release and Docker Image
+
+on:
+  push:
+    tags:
+      - 'v*'       
+  workflow_dispatch: 
+    inputs: {}
+
+jobs:
+  build-release:
+    name: Build and Publish Release Assets
+    runs-on: ubuntu-latest
+    outputs:
+      release_id: ${{ steps.create_release.outputs.id }}
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8 SDK
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Publish Linux x64 (framework-dependent, ReadyToRun)
+        run: |
+          dotnet publish -c Release \
+            -r linux-x64 \
+            -o out/linux-x64 \
+            /p:PublishReadyToRun=true
+
+          cd out/linux-x64
+          zip -j ../../FanX.Linux.x64.zip *
+
+      - name: Publish Linux arm64 (framework-dependent, ReadyToRun)
+        run: |
+          dotnet publish -c Release \
+            -r linux-arm64 \
+            -o out/linux-arm64 \
+            /p:PublishReadyToRun=true
+
+          cd out/linux-arm64
+          zip -j ../../FanX.Linux.arm64.zip *
+
+      - name: Publish Windows x64 (framework-dependent, ReadyToRun)
+        run: |
+          dotnet publish -c Release \
+            -r win-x64 \
+            -o out/win-x64 \
+            /p:PublishReadyToRun=true
+
+          cd out/win-x64
+          zip -j ../../FanX.Windows.x64.zip *
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+
+      - name: Upload Linux x64 Zip
+        uses: actions/upload-release-asset@v1
+        with:
+          release_id: ${{ steps.create_release.outputs.id }}
+          asset_path: FanX.Linux.x64.zip
+          asset_name: FanX.Linux.x64.zip
+          asset_content_type: application/zip
+
+      - name: Upload Linux arm64 Zip
+        uses: actions/upload-release-asset@v1
+        with:
+          release_id: ${{ steps.create_release.outputs.id }}
+          asset_path: FanX.Linux.arm64.zip
+          asset_name: FanX.Linux.arm64.zip
+          asset_content_type: application/zip
+
+      - name: Upload Windows x64 Zip
+        uses: actions/upload-release-asset@v1
+        with:
+          release_id: ${{ steps.create_release.outputs.id }}
+          asset_path: FanX.Windows.x64.zip
+          asset_name: FanX.Windows.x64.zip
+          asset_content_type: application/zip
+
+  build-docker:
+    name: Build and Push Docker Image
+    needs: build-release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: realswaggymacro
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: realswaggymacro/fanx
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=${{ github.ref_name }},enable=true
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
