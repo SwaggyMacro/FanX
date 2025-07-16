@@ -32,7 +32,7 @@ jobs:
             -o out/linux-x64 \
             /p:PublishReadyToRun=true
           cd out/linux-x64
-          zip -j ../../FanX.Linux.x64.zip *
+          zip -r ../../FanX.Linux.x64.zip .
 
       - name: Publish Linux arm64 (framework-dependent, ReadyToRun)
         run: |
@@ -41,7 +41,7 @@ jobs:
             -o out/linux-arm64 \
             /p:PublishReadyToRun=true
           cd out/linux-arm64
-          zip -j ../../FanX.Linux.arm64.zip *
+          zip -r ../../FanX.Linux.arm64.zip .
 
       - name: Publish Windows x64 (framework-dependent, ReadyToRun)
         run: |
@@ -50,7 +50,7 @@ jobs:
             -o out/win-x64 \
             /p:PublishReadyToRun=true
           cd out/win-x64
-          zip -j ../../FanX.Windows.x64.zip *
+          zip -r ../../FanX.Windows.x64.zip .
 
       - name: Create GitHub Release
         id: create_release
