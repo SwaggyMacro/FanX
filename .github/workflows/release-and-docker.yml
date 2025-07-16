@@ -3,14 +3,16 @@
 on:
   push:
     tags:
-      - 'v*'    
-  workflow_dispatch: 
+      - 'v*'
+  workflow_dispatch:
     inputs: {}
 
 jobs:
   build-release:
     name: Build and Publish Release Assets
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     outputs:
       release_id: ${{ steps.create_release.outputs.id }}
 
@@ -19,7 +21,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup .NET 8 SDK
-        uses: actions/setup-dotnet@v3
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
 
@@ -52,40 +54,19 @@ jobs:
 
       - name: Create GitHub Release
         id: create_release
-        uses: actions/create-release@v1
+        uses: softprops/action-gh-release@v2
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
           tag_name: ${{ github.ref_name }}
-          release_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
           draft: false
           prerelease: false
-
-      - name: Upload Linux x64 Zip
-        uses: actions/upload-release-asset@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          release_id: ${{ steps.create_release.outputs.id }}
-          asset_path: FanX.Linux.x64.zip
-          asset_name: FanX.Linux.x64.zip
-          asset_content_type: application/zip
-
-      - name: Upload Linux arm64 Zip
-        uses: actions/upload-release-asset@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          release_id: ${{ steps.create_release.outputs.id }}
-          asset_path: FanX.Linux.arm64.zip
-          asset_name: FanX.Linux.arm64.zip
-          asset_content_type: application/zip
-
-      - name: Upload Windows x64 Zip
-        uses: actions/upload-release-asset@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          release_id: ${{ steps.create_release.outputs.id }}
-          asset_path: FanX.Windows.x64.zip
-          asset_name: FanX.Windows.x64.zip
-          asset_content_type: application/zip
+          generate_release_notes: true
+          files: |
+            FanX.Linux.x64.zip
+            FanX.Linux.arm64.zip
+            FanX.Windows.x64.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   build-docker:
     name: Build and Push Docker Image
