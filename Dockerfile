@@ -1,5 +1,4 @@
-# use ubuntu
-FROM ubuntu:22.04
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 
 # set work dir
 WORKDIR /app
