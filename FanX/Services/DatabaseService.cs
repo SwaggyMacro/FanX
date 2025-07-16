@@ -25,6 +25,14 @@ namespace FanX.Services
                 var fullPath = Path.GetFullPath(dbPath);
                 LoggerService.Info($"Using SQLite DB file: {fullPath}");
             }
+
+            // Ensure SQLite file exists and is writable
+            var dbFilePath = connectionString.Substring(dataSourcePrefix.Length);
+            var absoluteDbPath = Path.GetFullPath(dbFilePath);
+            var dbDir = Path.GetDirectoryName(absoluteDbPath);
+            if (!string.IsNullOrWhiteSpace(dbDir) && !Directory.Exists(dbDir)) Directory.CreateDirectory(dbDir);
+            using (new FileStream(absoluteDbPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite)) {}
+
             _db = new SqlSugarScope(new ConnectionConfig()
             {
                 ConnectionString = connectionString,
@@ -32,8 +40,10 @@ namespace FanX.Services
                 IsAutoCloseConnection = true,
                 InitKeyType = InitKeyType.Attribute
             });
+            // Configure SQLite pragmas for WAL mode and foreign key enforcement
+            _db.Ado.ExecuteCommand("PRAGMA journal_mode=WAL;PRAGMA synchronous=NORMAL;PRAGMA foreign_keys=ON;");
 
-            // 初始化数据库和表
+            // initialize the database
             InitializeDatabase();
         }
 
