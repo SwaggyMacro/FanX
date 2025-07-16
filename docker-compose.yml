@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  fanx:
+    image: realswaggymacro/fanx:latest
+    container_name: fanx
+    ports:
+      - "5136:5136"
+    environment:
+      - FanX_PORT=5136
+    restart: unless-stopped
