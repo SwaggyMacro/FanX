@@ -2,6 +2,7 @@ using FanX.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using MudBlazor.Services;
 using ApexCharts;
+using System.IO; // added for Path
 
 LoggerService.Info("Application starting up...");
 
@@ -34,8 +35,20 @@ builder.Services.AddHostedService<SensorLoggingService>();
 builder.Services.AddScoped<NotificationService>();
 builder.Services.AddHostedService<MaintenanceService>();
 
-// static file serving UseStaticWebAssets
-builder.WebHost.UseStaticWebAssets(); 
+// static file serving configuration
+if (builder.Environment.IsDevelopment())
+{
+    // Use static assets from project during development
+    builder.WebHost.UseStaticWebAssets();
+}
+else
+{
+    // In production/published deployment, ensure wwwroot is served from the output directory
+    var contentRoot = AppContext.BaseDirectory;
+    builder.WebHost
+        .UseContentRoot(contentRoot)
+        .UseWebRoot(Path.Combine(contentRoot, "wwwroot"));
+}
 
 // Add Http client factory
 builder.Services.AddHttpClient();
