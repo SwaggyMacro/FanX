@@ -6,6 +6,9 @@ services:
     container_name: fanx
     ports:
       - "5136:5136"
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
     environment:
       - FanX_PORT=5136
     restart: unless-stopped
