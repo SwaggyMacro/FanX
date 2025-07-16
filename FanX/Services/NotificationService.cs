@@ -29,7 +29,9 @@ public class NotificationService
 
     public async Task<List<NotificationRule>> GetNotificationRulesAsync()
     {
-        var rules = await _dbService.Db.Queryable<NotificationRule>().ToListAsync();
+        var rules = await _dbService.Db.Queryable<NotificationRule>()
+            .OrderBy(r => r.SortOrder)
+            .ToListAsync();
         if (rules.Any())
         {
             var ruleIds = rules.Select(r => r.Id).ToList();
@@ -61,12 +63,14 @@ public class NotificationService
             // Explicitly handle Insert vs. Update for the rule for more reliability
             if (rule.Id == 0)
             {
-                // It's a new rule, insert it and get the new ID
+                // New rule: assign SortOrder as max existing + 1
+                var maxSort = await _dbService.Db.Queryable<NotificationRule>().MaxAsync<int>(r => r.SortOrder);
+                rule.SortOrder = maxSort + 1;
                 rule.Id = await _dbService.Db.Insertable(rule).ExecuteReturnIdentityAsync();
             }
             else
             {
-                // It's an existing rule, update it
+                // Existing rule: update
                 await _dbService.Db.Updateable(rule).ExecuteCommandAsync();
             }
 
@@ -125,37 +129,62 @@ public class NotificationService
 
         foreach (var rule in rules.Where(r => r.IsEnabled && r.Conditions.Any()))
         {
-            var allConditionsMet = true;
-            var conditionsSummary = new StringBuilder();
-
-            foreach (var condition in rule.Conditions)
+            var shouldTrigger = EvaluateRuleConditions(rule.Conditions, sensorReadingsList);
+            
+            if (shouldTrigger.IsMet)
             {
-                var sensorReading = sensorReadingsList.FirstOrDefault(s =>
-                    string.Equals(s.SensorName, condition.SensorName, StringComparison.OrdinalIgnoreCase));
-
-                if (sensorReading == null)
-                {
-                    // If a sensor in a condition is not found in the latest readings, the condition cannot be met.
-                    allConditionsMet = false;
-                    break;
-                }
-
-                var conditionMetThisCycle = IsConditionMet(sensorReading.Reading, condition.Threshold, condition.Operator);
-
-                if (!conditionMetThisCycle)
-                {
-                    allConditionsMet = false;
-                    break;
-                }
-
-                conditionsSummary.Append($"{sensorReading.SensorName} was {sensorReading.Reading:F1}{sensorReading.Unit}; ");
-            }
-
-            if (allConditionsMet)
-            {
-                await HandleTriggeredRule(rule, settings, conditionsSummary.ToString().TrimEnd(' ', ';'));
+                await HandleTriggeredRule(rule, settings, shouldTrigger.Summary);
             }
         }
+    }
+
+    private (bool IsMet, string Summary) EvaluateRuleConditions(List<NotificationCondition> conditions, List<SensorData> sensorReadings)
+    {
+        if (!conditions.Any()) return (false, "");
+
+        var conditionsSummary = new StringBuilder();
+        var results = new List<bool>();
+
+        // Evaluate each condition
+        foreach (var condition in conditions)
+        {
+            var sensorReading = sensorReadings.FirstOrDefault(s =>
+                string.Equals(s.SensorName, condition.SensorName, StringComparison.OrdinalIgnoreCase));
+
+            if (sensorReading == null)
+            {
+                // If sensor not found, condition is false
+                results.Add(false);
+                continue;
+            }
+
+            var conditionMet = IsConditionMet(sensorReading.Reading, condition.Threshold, condition.Operator);
+            results.Add(conditionMet);
+
+            if (conditionMet)
+            {
+                conditionsSummary.Append($"{sensorReading.SensorName} was {sensorReading.Reading:F1}{sensorReading.Unit}; ");
+            }
+        }
+
+        // Apply And/Or logic
+        var finalResult = results[0]; // Start with first condition result
+
+        for (int i = 1; i < conditions.Count; i++)
+        {
+            var connector = conditions[i].Connector;
+            
+            if (connector == ConditionLogicalOperator.And)
+            {
+                finalResult = finalResult && results[i];
+            }
+            else if (connector == ConditionLogicalOperator.Or)
+            {
+                finalResult = finalResult || results[i];
+            }
+        }
+
+        return (finalResult, conditionsSummary.ToString().TrimEnd(' ', ';'));
     }
     
     private async Task HandleTriggeredRule(NotificationRule rule, NotificationSetting settings, string conditionsSummary)
@@ -370,4 +399,4 @@ public class NotificationService
             return false;
         }
     }
-} 
+}

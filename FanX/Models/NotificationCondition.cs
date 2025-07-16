@@ -9,6 +9,7 @@ public enum TriggerOperator
     EqualTo
 }
 
+
 [SugarTable("NotificationConditions")]
 public class NotificationCondition
 {
@@ -23,4 +24,6 @@ public class NotificationCondition
     public TriggerOperator Operator { get; set; } = TriggerOperator.GreaterThan;
 
     public double Threshold { get; set; }
-} 
+
+    public ConditionLogicalOperator Connector { get; set; } = ConditionLogicalOperator.And;
+}

@@ -19,6 +19,10 @@
                     }
                 }
             </MudSelect>
+            <MudSelect T="ConditionLogicalOperator" @bind-Value="@_condition.Connector" Label="Connector" Required="true" Class="mt-4">
+                <MudSelectItem Value="ConditionLogicalOperator.And">AND</MudSelectItem>
+                <MudSelectItem Value="ConditionLogicalOperator.Or">OR</MudSelectItem>
+            </MudSelect>
             <MudSelect T="TriggerOperator" @bind-Value="@_condition.Operator" Label="@Localization.Operator" Required="true" Class="mt-4">
                 @foreach (TriggerOperator op in Enum.GetValues(typeof(TriggerOperator)))
                 {
@@ -91,4 +95,4 @@
     {
         LocalizationService.OnLanguageChanged -= StateHasChanged;
     }
-} 
+}

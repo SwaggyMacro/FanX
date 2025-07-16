@@ -12,6 +12,8 @@ public class NotificationRule
 
     public string Name { get; set; } = "New Rule";
 
+    public int SortOrder { get; set; } = 0;
+
     // Cooldown in minutes
     public int FrequencyMinutes { get; set; } = 10;
 
@@ -20,4 +22,4 @@ public class NotificationRule
     // Navigation property for conditions
     [SugarColumn(IsIgnore = true)]
     public List<NotificationCondition> Conditions { get; set; } = new();
-} 
+}

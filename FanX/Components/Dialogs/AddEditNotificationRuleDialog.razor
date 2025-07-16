@@ -39,18 +39,31 @@
                     <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => OpenConditionDialog())">@Localization.AddCondition</MudButton>
                 </ToolBarContent>
                 <HeaderContent>
+                    <MudTh></MudTh> <!-- Order controls -->
                     <MudTh>@Localization.Sensor</MudTh>
                     <MudTh>@Localization.Operator</MudTh>
+                    <MudTh>Connector</MudTh>
                     <MudTh>@Localization.Threshold</MudTh>
                     <MudTh>@Localization.Actions</MudTh>
                 </HeaderContent>
                 <RowTemplate>
+                    <MudTd DataLabel=""> <!-- Order controls -->
+                        <MudIconButton Icon="@Icons.Material.Filled.ArrowUpward"
+                                       Disabled="@(_rule.Conditions.IndexOf(context) == 0)"
+                                       OnClick="@(() => MoveConditionUp(context))" Size="Size.Small" />
+                        <MudIconButton Icon="@Icons.Material.Filled.ArrowDownward"
+                                       Disabled="@(_rule.Conditions.IndexOf(context) == _rule.Conditions.Count - 1)"
+                                       OnClick="@(() => MoveConditionDown(context))" Size="Size.Small" />
+                    </MudTd>
                     <MudTd DataLabel="@Localization.Sensor">@context.SensorName</MudTd>
                     <MudTd DataLabel="@Localization.Operator">@GetOperatorDisplayName(context.Operator)</MudTd>
+                    <MudTd DataLabel="Connector">@context.Connector</MudTd>
                     <MudTd DataLabel="@Localization.Threshold">@context.Threshold</MudTd>
                     <MudTd DataLabel="@Localization.Actions">
-                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" OnClick="@(() => OpenConditionDialog(context))"/>
-                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Variant="Variant.Filled" Color="Color.Error" Size="Size.Small" OnClick="@(() => RemoveCondition(context))"/>
+                        <div style="display: flex; gap: 4px;">
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" OnClick="@(() => OpenConditionDialog(context))"/>
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Variant="Variant.Filled" Color="Color.Error" Size="Size.Small" OnClick="@(() => RemoveCondition(context))"/>
+                        </div>
                     </MudTd>
                 </RowTemplate>
                  <NoRecordsContent>
@@ -152,8 +165,34 @@
         }
     }
 
+    private void MoveConditionUp(NotificationCondition condition)
+    {
+        var list = _rule?.Conditions;
+        if (list == null) return;
+        var index = list.IndexOf(condition);
+        if (index > 0)
+        {
+            list.RemoveAt(index);
+            list.Insert(index - 1, condition);
+            StateHasChanged();
+        }
+    }
+
+    private void MoveConditionDown(NotificationCondition condition)
+    {
+        var list = _rule?.Conditions;
+        if (list == null) return;
+        var index = list.IndexOf(condition);
+        if (index >= 0 && index < list.Count - 1)
+        {
+            list.RemoveAt(index);
+            list.Insert(index + 1, condition);
+            StateHasChanged();
+        }
+    }
+
     public void Dispose()
     {
         LocalizationService.OnLanguageChanged -= StateHasChanged;
     }
-} 
+}

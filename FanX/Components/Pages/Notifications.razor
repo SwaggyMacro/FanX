@@ -127,6 +127,7 @@ else
         <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.Add" OnClick="@(() => OpenAddEditDialog(0))">@Localization.AddRule</MudButton>
     </ToolBarContent>
     <HeaderContent>
+        <MudTh></MudTh> <!-- Order column -->
         <MudTh>@Localization.RuleName</MudTh>
         <MudTh>@Localization.Conditions</MudTh>
         <MudTh>@Localization.CooldownMins</MudTh>
@@ -134,6 +135,14 @@ else
         <MudTh>@Localization.Actions</MudTh>
     </HeaderContent>
     <RowTemplate>
+        <MudTd DataLabel=""> <!-- Order controls -->
+            <MudIconButton Icon="@Icons.Material.Filled.ArrowUpward"
+                           Disabled="@(context.SortOrder == _rules.First().SortOrder)"
+                           OnClick="@(async () => await MoveUp(context.Id))" Size="Size.Small" />
+            <MudIconButton Icon="@Icons.Material.Filled.ArrowDownward"
+                           Disabled="@(context.SortOrder == _rules.Last().SortOrder)"
+                           OnClick="@(async () => await MoveDown(context.Id))" Size="Size.Small" />
+        </MudTd>
         <MudTd DataLabel="@Localization.RuleName">@context.Name</MudTd>
         <MudTd DataLabel="@Localization.Conditions">@context.Conditions.Count</MudTd>
         <MudTd DataLabel="@Localization.CooldownMins">@context.FrequencyMinutes</MudTd>
@@ -307,6 +316,47 @@ else
         }
     }
 
+    private async Task MoveUp(int id)
+    {
+        await ServerReload(null, CancellationToken.None); // ensure _rules is loaded
+        var index = _rules.FindIndex(r => r.Id == id);
+        if (index > 0)
+        {
+            var curr = _rules[index];
+            var prev = _rules[index - 1];
+            (curr.SortOrder, prev.SortOrder) = (prev.SortOrder, curr.SortOrder);
+            await NotificationService.SaveNotificationRuleAsync(prev);
+            await NotificationService.SaveNotificationRuleAsync(curr);
+            if (_table != null)
+                await _table.ReloadServerData();
+            Snackbar.Add(Localization.RuleOrderUpdated, Severity.Success);
+        }
+        else
+        {
+            Snackbar.Add(Localization.RuleOrderMoveFailed, Severity.Warning);
+        }
+    }
+    private async Task MoveDown(int id)
+    {
+        await ServerReload(null, CancellationToken.None);
+        var index = _rules.FindIndex(r => r.Id == id);
+        if (index >= 0 && index < _rules.Count - 1)
+        {
+            var curr = _rules[index];
+            var next = _rules[index + 1];
+            (curr.SortOrder, next.SortOrder) = (next.SortOrder, curr.SortOrder);
+            await NotificationService.SaveNotificationRuleAsync(next);
+            await NotificationService.SaveNotificationRuleAsync(curr);
+            if (_table != null)
+                await _table.ReloadServerData();
+            Snackbar.Add(Localization.RuleOrderUpdated, Severity.Success);
+        }
+        else
+        {
+            Snackbar.Add(Localization.RuleOrderMoveFailed, Severity.Warning);
+        }
+    }
+
     public void Dispose()
     {
         LocalizationService.OnLanguageChanged -= StateHasChanged;
@@ -335,4 +385,4 @@ else
         position: relative;
         top: 0.15rem;
     }
-</style> 
+</style>
