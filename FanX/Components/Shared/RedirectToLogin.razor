@@ -1,0 +1,16 @@
+@using FanX.Resources
+@inject NavigationManager Navigation
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-16">
+    <MudAlert Severity="Severity.Info">
+        <MudText>@Localization.RedirectingToLogin</MudText>
+        <MudProgressLinear Indeterminate="true" Class="mt-2" />
+    </MudAlert>
+</MudContainer>
+
+@code {
+    protected override void OnInitialized()
+    {
+        Navigation.NavigateTo("/login", true);
+    }
+}

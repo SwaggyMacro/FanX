@@ -1,0 +1,362 @@
+@page "/"
+@page "/dashboard"
+@using FanX.Resources
+@using System.Linq
+@using ApexCharts
+@attribute [Authorize]
+@implements IDisposable
+@inject LocalizationService LocalizationService
+@inject IServiceScopeFactory ScopeFactory
+@inject ThemeService ThemeService
+
+<PageTitle>@Localization.Dashboard</PageTitle>
+
+<MudText Typo="Typo.h5" GutterBottom="true">@Localization.Dashboard</MudText>
+
+<MudGrid Spacing="3" Class="mb-4">
+    <MudItem xs="12">
+        <MudText Typo="Typo.h6">Live Status</MudText>
+    </MudItem>
+
+    <MudItem xs="12" md="6">
+        <MudStack Spacing="3">
+        <MudCard>
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h6">@Localization.Power</MudText>
+                </CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent>
+                @if (_livePowerData != null)
+                {
+                    <MudPaper Class="pa-3">
+                        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                <MudIcon Icon="@Icons.Material.Filled.Power" Color="MudBlazor.Color.Error"/>
+                                <MudText Typo="Typo.body1">@_livePowerData.SensorName</MudText>
+                            </MudStack>
+                            <MudText Typo="Typo.h5">@_livePowerData.Reading.ToString("F1") W</MudText>
+                        </MudStack>
+                        <MudStack Row="true" Justify="Justify.SpaceBetween" Class="mt-2" Wrap="Wrap.Wrap">
+                            <MudText Typo="Typo.caption">Avg (1h): @_powerAverages.Hour.ToString("F1") W</MudText>
+                            <MudText Typo="Typo.caption">Avg (24h): @_powerAverages.Day.ToString("F1") W</MudText>
+                            <MudText Typo="Typo.caption">Avg (7d): @_powerAverages.Week.ToString("F1") W</MudText>
+                            <MudText Typo="Typo.caption">Avg (30d): @_powerAverages.Month.ToString("F1") W</MudText>
+                        </MudStack>
+                        <MudStack Row="true" Justify="Justify.SpaceBetween" Class="mt-1" Wrap="Wrap.Wrap">
+                            <MudText Typo="Typo.caption">Min: @_powerAverages.Min.ToString("F1") W</MudText>
+                            <MudText Typo="Typo.caption">Max: @_powerAverages.Max.ToString("F1") W</MudText>
+                        </MudStack>
+                    </MudPaper>
+                }
+            </MudCardContent>
+        </MudCard>
+
+            <MudCard>
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">@Localization.Temperature</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudStack Spacing="2">
+                        @foreach (var sensor in _liveCpuData)
+                        {
+                            <MudPaper Class="pa-3">
+                                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                        <MudIcon Icon="@Icons.Material.Filled.Thermostat" Color="MudBlazor.Color.Warning"/>
+                                        <MudText Typo="Typo.body1">@sensor.SensorName</MudText>
+                                    </MudStack>
+                                    <MudText Typo="Typo.h5">@sensor.Reading.ToString("F1") °C</MudText>
+                                </MudStack>
+                                <MudStack Row="true" Justify="Justify.SpaceBetween" Class="mt-2" Wrap="Wrap.Wrap">
+                                    <MudText Typo="Typo.caption">Avg (1h): @_tempAverages[sensor.SensorName ?? "Null"].Hour.ToString("F1") °C</MudText>
+                                    <MudText Typo="Typo.caption">Avg (24h): @_tempAverages[sensor.SensorName ?? "Null"].Day.ToString("F1") °C</MudText>
+                                    <MudText Typo="Typo.caption">Avg (7d): @_tempAverages[sensor.SensorName ?? "Null"].Week.ToString("F1") °C</MudText>
+                                    <MudText Typo="Typo.caption">Avg (30d): @_tempAverages[sensor.SensorName ?? "Null"].Month.ToString("F1") °C</MudText>
+                                </MudStack>
+                                <MudStack Row="true" Justify="Justify.SpaceBetween" Class="mt-1" Wrap="Wrap.Wrap">
+                                    <MudText Typo="Typo.caption">Min: @_tempAverages[sensor.SensorName ?? "Null"].Min.ToString("F1") °C</MudText>
+                                    <MudText Typo="Typo.caption">Max: @_tempAverages[sensor.SensorName ?? "Null"].Max.ToString("F1") °C</MudText>
+                                </MudStack>
+                            </MudPaper>
+                        }
+                    </MudStack>
+                </MudCardContent>
+            </MudCard>
+        </MudStack>
+                </MudItem>
+
+    <MudItem xs="12" md="6">
+        <MudCard Style="height: 100%">
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h6">@Localization.Fans</MudText>
+                </CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudStack Spacing="2">
+            @foreach (var sensor in _liveFanData)
+            {
+                        <MudPaper Class="pa-3">
+                            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                    <MudIcon Icon="@Icons.Material.Filled.Air" Color="MudBlazor.Color.Info"/>
+                                    <MudText Typo="Typo.body1">@sensor.SensorName</MudText>
+                                </MudStack>
+                        <MudText Typo="Typo.h5">@sensor.Reading.ToString("F0") RPM</MudText>
+                            </MudStack>
+                            <MudStack Row="true" Justify="Justify.SpaceBetween" Class="mt-2" Wrap="Wrap.Wrap">
+                                <MudText Typo="Typo.caption">Avg (1h): @_fanAverages[sensor.SensorName ?? "Null"].Hour.ToString("F0") RPM</MudText>
+                                <MudText Typo="Typo.caption">Avg (24h): @_fanAverages[sensor.SensorName ?? "Null"].Day.ToString("F0") RPM</MudText>
+                                <MudText Typo="Typo.caption">Avg (7d): @_fanAverages[sensor.SensorName ?? "Null"].Week.ToString("F0") RPM</MudText>
+                                <MudText Typo="Typo.caption">Avg (30d): @_fanAverages[sensor.SensorName ?? "Null"].Month.ToString("F0") RPM</MudText>
+                            </MudStack>
+                            <MudStack Row="true" Justify="Justify.SpaceBetween" Class="mt-1" Wrap="Wrap.Wrap">
+                                <MudText Typo="Typo.caption">Min: @_fanAverages[sensor.SensorName ?? "Null"].Min.ToString("F0") RPM</MudText>
+                                <MudText Typo="Typo.caption">Max: @_fanAverages[sensor.SensorName ?? "Null"].Max.ToString("F0") RPM</MudText>
+                            </MudStack>
+                        @if (sensor.Pwm.HasValue)
+                        {
+                            <MudProgressLinear Color="MudBlazor.Color.Primary" Value="@sensor.Pwm.Value" Class="my-1"/>
+                                <MudText Typo="Typo.body2" Align="MudBlazor.Align.End">@sensor.Pwm.Value.ToString("F0")%</MudText>
+                        }
+                    </MudPaper>
+            }
+                </MudStack>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+</MudGrid>
+    
+<MudGrid Spacing="3">
+    <MudItem xs="12" md="4">
+        <MudStack Spacing="3">
+            <MudPaper Class="pa-3">
+            <MudText Typo="Typo.h6">@Localization.TemperatureHistory</MudText>
+            <ApexChart TItem="SensorData" Options="_temperatureChartOptions" @ref="_temperatureChart">
+                @foreach (var series in _allData.Where(d => d.SensorType == "Temperature").GroupBy(d => d.SensorName))
+                {
+                    <ApexPointSeries TItem="SensorData" Items="series.ToList()" Name="@series.Key"
+                                     XValue="@(item => item.Timestamp)"
+                                     YValue="@(item => Convert.ToDecimal(item.Reading))"/>
+                }
+            </ApexChart>
+        </MudPaper>
+            <MudPaper Class="pa-3">
+                <MudText Typo="Typo.h6">@Localization.PowerHistory</MudText>
+                <ApexChart TItem="SensorData" Options="_powerChartOptions" @ref="_powerChart">
+                    <ApexPointSeries TItem="SensorData"
+                                     Items="@(_allData.Where(d => d.SensorName == "Pwr Consumption").ToList())"
+                                     Name="Power Consumption"
+                                     XValue="@(item => item.Timestamp)"
+                                     YValue="@(item => Convert.ToDecimal(item.Reading))"/>
+                </ApexChart>
+            </MudPaper>
+        </MudStack>
+    </MudItem>
+
+    <MudItem xs="12" md="8">
+        <MudPaper Class="pa-3 d-flex flex-column" Style="height: 100%">
+            <MudText Typo="Typo.h6" GutterBottom="true">@Localization.FanSpeedHistory</MudText>
+            <ApexChart TItem="SensorData" Options="_fanChartOptions" @ref="_fanChart">
+                @foreach (var series in _allData.Where(d => d.SensorType == "Fan" && d.SensorName != "Fan Redundancy").GroupBy(d => d.SensorName))
+                {
+                    <ApexPointSeries TItem="SensorData" Items="series.ToList()" Name="@series.Key"
+                                     XValue="@(item => item.Timestamp)"
+                                     YValue="@(item => Convert.ToDecimal(item.Reading))"/>
+                }
+            </ApexChart>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private Timer? _timer;
+    private ApexChartOptions<SensorData> _temperatureChartOptions = new();
+    private ApexChartOptions<SensorData> _fanChartOptions = new();
+    private ApexChartOptions<SensorData> _powerChartOptions = new();
+    private ApexChart<SensorData>? _temperatureChart;
+    private ApexChart<SensorData>? _fanChart;
+    private ApexChart<SensorData>? _powerChart;
+
+    private List<SensorData> _allData = new();
+    private List<SensorData> _liveCpuData = new();
+    private List<SensorData> _liveFanData = new();
+    private SensorData? _livePowerData;
+    
+    private readonly Dictionary<string, (double Hour, double Day, double Week, double Month, double Min, double Max)> _tempAverages = new();
+    private (double Hour, double Day, double Week, double Month, double Min, double Max) _powerAverages;
+    private readonly Dictionary<string, (double Hour, double Day, double Week, double Month, double Min, double Max)> _fanAverages = new();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        ThemeService.OnThemeChanged += OnThemeChanged;
+        LocalizationService.OnLanguageChanged += StateHasChanged;
+        InitializeChartOptions();
+        await LoadData();
+        _timer = new Timer(async void (_) => await InvokeAsync(LoadData), null, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5));
+    }
+
+    private async void OnThemeChanged()
+    {
+        InitializeChartOptions();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task LoadData()
+    {
+        await using var scope = ScopeFactory.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<DatabaseService>().Db;
+
+        var now = DateTime.Now;
+        var hourAgo = now.AddHours(-1);
+        var dayAgo = now.AddDays(-1);
+        var weekAgo = now.AddDays(-7);
+        var monthAgo = now.AddDays(-30);
+
+        var allDbData = await db.Queryable<SensorData>().Where(s => s.Timestamp >= monthAgo).OrderBy(s => s.Timestamp).ToListAsync();
+        
+        _allData = allDbData.Where(s => s.Timestamp >= dayAgo).ToList();
+
+        if (!_allData.Any())
+        {
+            _liveCpuData.Clear();
+            _liveFanData.Clear();
+            _livePowerData = null;
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        var normalizedData = _allData
+            .GroupBy(d => d.Timestamp)
+            .SelectMany(g =>
+            {
+                var unifiedTimestamp = g.Key;
+                return g.Select(d =>
+                {
+                    d.Timestamp = unifiedTimestamp;
+                    return d;
+                });
+            })
+            .ToList();
+
+        _allData = normalizedData;
+
+        _liveCpuData = _allData.Where(d => d.SensorType == "Temperature")
+            .GroupBy(d => d.SensorName).Select(g => g.LastOrDefault()).OfType<SensorData>().ToList();
+
+        _liveFanData = _allData.Where(d => d.SensorType == "Fan" && d.SensorName != "Fan Redundancy")
+            .GroupBy(d => d.SensorName).Select(g => g.LastOrDefault()).OfType<SensorData>().ToList();
+
+        _livePowerData = _allData.LastOrDefault(d => d.SensorName == "Pwr Consumption");
+        
+        // Calculate averages
+        var tempSensors = allDbData.Where(d => d.SensorType == "Temperature").GroupBy(d => d.SensorName);
+        foreach (var group in tempSensors)
+        {
+            if (group.Key != null)
+            _tempAverages[group.Key] = (
+                group.Where(d => d.Timestamp >= hourAgo).DefaultIfEmpty().Average(d => d?.Reading ?? 0),
+                group.Where(d => d.Timestamp >= dayAgo).DefaultIfEmpty().Average(d => d?.Reading ?? 0),
+                group.Where(d => d.Timestamp >= weekAgo).DefaultIfEmpty().Average(d => d?.Reading ?? 0),
+                group.DefaultIfEmpty().Average(d => d?.Reading ?? 0),
+                group.DefaultIfEmpty().Min(d => d?.Reading ?? 0),
+                group.DefaultIfEmpty().Max(d => d?.Reading ?? 0)
+            );
+        }
+
+        var powerData = allDbData.Where(d => d.SensorName == "Pwr Consumption").ToList();
+        if (powerData.Any())
+        {
+            _powerAverages = (
+                powerData.Where(d => d.Timestamp >= hourAgo).DefaultIfEmpty().Average(d => d?.Reading ?? 0),
+                powerData.Where(d => d.Timestamp >= dayAgo).DefaultIfEmpty().Average(d => d?.Reading ?? 0),
+                powerData.Where(d => d.Timestamp >= weekAgo).DefaultIfEmpty().Average(d => d?.Reading ?? 0),
+                powerData.DefaultIfEmpty().Average(d => d?.Reading ?? 0),
+                powerData.DefaultIfEmpty().Min(d => d?.Reading ?? 0),
+                powerData.DefaultIfEmpty().Max(d => d?.Reading ?? 0)
+            );
+        }
+        
+        var fanSensors = allDbData.Where(d => d.SensorType == "Fan").GroupBy(d => d.SensorName);
+        foreach (var group in fanSensors)
+        {
+            if (group.Key != null)
+            _fanAverages[group.Key] = (
+                group.Where(d => d.Timestamp >= hourAgo).DefaultIfEmpty().Average(d => d?.Reading ?? 0),
+                group.Where(d => d.Timestamp >= dayAgo).DefaultIfEmpty().Average(d => d?.Reading ?? 0),
+                group.Where(d => d.Timestamp >= weekAgo).DefaultIfEmpty().Average(d => d?.Reading ?? 0),
+                group.DefaultIfEmpty().Average(d => d?.Reading ?? 0),
+                group.DefaultIfEmpty().Min(d => d?.Reading ?? 0),
+                group.DefaultIfEmpty().Max(d => d?.Reading ?? 0)
+            );
+        }
+
+        await InvokeAsync(StateHasChanged);
+        if (_temperatureChart != null) await _temperatureChart.UpdateSeriesAsync();
+        if (_fanChart != null) await _fanChart.UpdateSeriesAsync();
+        if (_powerChart != null) await _powerChart.UpdateSeriesAsync();
+    }
+
+    private void InitializeChartOptions()
+    {
+        var theme = ThemeService.IsDarkMode ? Mode.Dark : Mode.Light;
+
+        _temperatureChartOptions = new ApexChartOptions<SensorData>
+        {
+            Theme = new Theme { Mode = theme },
+            Chart = new Chart { Zoom = new Zoom { Enabled = true }, Type = ApexCharts.ChartType.Line },
+            Xaxis = new XAxis { Type = XAxisType.Datetime },
+            Yaxis = [new YAxis { Title = new AxisTitle { Text = "°C" } }],
+            Tooltip = new Tooltip { Shared = true, Intersect = false, FollowCursor = true, X = new TooltipX { Show = true } },
+            Stroke = new Stroke { Curve = Curve.Smooth, Width = 2 },
+            Markers = new Markers { Size = 3, Hover = new MarkersHover { Size = 6 } },
+            DataLabels = new DataLabels { Enabled = false }
+        };
+
+        _fanChartOptions = new ApexChartOptions<SensorData>
+        {
+            Theme = new Theme { Mode = theme },
+            Chart = new Chart { Zoom = new Zoom { Enabled = true }, Type = ApexCharts.ChartType.Line },
+            Xaxis = new XAxis { Type = XAxisType.Datetime },
+            Yaxis = [new YAxis { Title = new AxisTitle { Text = "RPM" } }],
+            Tooltip = new Tooltip { Shared = true },
+            Stroke = new Stroke { Curve = Curve.Smooth, Width = 2 },
+            Markers = new Markers { Size = 3, Hover = new MarkersHover { Size = 6 } },
+            DataLabels = new DataLabels { Enabled = false }
+        };
+        
+        _powerChartOptions = new ApexChartOptions<SensorData>
+        {
+            Theme = new Theme { Mode = theme },
+            Chart = new Chart { Zoom = new Zoom { Enabled = true }, Type = ApexCharts.ChartType.Area },
+            Xaxis = new XAxis { Type = XAxisType.Datetime },
+            Yaxis = [new YAxis { Title = new AxisTitle { Text = "Watts" } }],
+            Stroke = new Stroke { Curve = Curve.Smooth, Width = 2 },
+            Markers = new Markers { Size = 0 },
+            DataLabels = new DataLabels { Enabled = false },
+            Fill = new Fill
+            {
+                Type = FillType.Gradient,
+                Gradient = new FillGradient
+                {
+                    Shade = theme == Mode.Dark ? GradientShade.Dark : GradientShade.Light,
+                    Type = GradientType.Vertical,
+                    OpacityFrom = 0.7,
+                    OpacityTo = 0.3
+                }
+            }
+        };
+    }
+
+    public void Dispose()
+    {
+        _timer?.Dispose();
+        ThemeService.OnThemeChanged -= OnThemeChanged;
+        LocalizationService.OnLanguageChanged -= StateHasChanged;
+    }
+
+} 

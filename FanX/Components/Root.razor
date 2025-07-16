@@ -1,0 +1,33 @@
+@using FanX.Resources
+@inject LocalizationService LocalizationService
+@implements IDisposable
+
+<MudThemeProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<CascadingAuthenticationState>
+    <Router AppAssembly="@typeof(MainLayout).Assembly">
+        <Found Context="routeData">
+            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)"/>
+        </Found>
+        <NotFound>
+            <PageTitle>@Localization.PageNotFound</PageTitle>
+            <LayoutView Layout="@typeof(MainLayout)">
+                <p role="alert">@Localization.PageNotFoundMessage</p>
+            </LayoutView>
+        </NotFound>
+    </Router>
+</CascadingAuthenticationState> 
+
+@code {
+    protected override void OnInitialized()
+    {
+        LocalizationService.OnLanguageChanged += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        LocalizationService.OnLanguageChanged -= StateHasChanged;
+    }
+} 

@@ -1,0 +1,5 @@
+﻿# bin, obj, .db
+bin/
+obj/
+.idea/
+*.db

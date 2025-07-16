@@ -1,0 +1,95 @@
+@using FanX.Resources
+@inject LocalizationService LocalizationService
+@implements IDisposable
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="_form" @bind-IsValid="@_success">
+            <MudSelect T="string" @bind-Value="@_condition.SensorName" Label="@Localization.Sensor" Required="true">
+                @{
+                    var conditionSensors = AvailableSensors
+                        .Where(s => s.SensorType == "Temperature"
+                                 || s.SensorType == "Fan"
+                                 || s.SensorName == "Pwr Consumption");
+                }
+                @if (!conditionSensors.Any())
+                {
+                    <MudSelectItem Value="@("Loading...")" Disabled="true">@Localization.Loading</MudSelectItem>
+                }
+                else
+                {
+                    @foreach (var sensor in conditionSensors)
+                    {
+                        <MudSelectItem Value="@sensor.SensorName">@sensor.SensorName</MudSelectItem>
+                    }
+                }
+            </MudSelect>
+            <MudSelect T="ConditionLogicalOperator" @bind-Value="@_condition.Connector" Label="Connector" Required="true" Class="mt-4">
+                <MudSelectItem Value="ConditionLogicalOperator.And">AND</MudSelectItem>
+                <MudSelectItem Value="ConditionLogicalOperator.Or">OR</MudSelectItem>
+            </MudSelect>
+            <MudSelect T="TriggerOperator" @bind-Value="@_condition.Operator" Label="@Localization.Operator" Required="true" Class="mt-4">
+                @foreach (TriggerOperator op in Enum.GetValues(typeof(TriggerOperator)))
+                {
+                    <MudSelectItem Value="@op">@GetOperatorDisplayName(op)</MudSelectItem>
+                }
+            </MudSelect>
+            <MudNumericField @bind-Value="@_condition.Threshold" Label="@Localization.Threshold" Required="true" Class="mt-4" />
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton StartIcon="@Icons.Material.Filled.Close" OnClick="@Cancel">@Localization.Cancel</MudButton>
+        <MudButton StartIcon="@Icons.Material.Filled.Check" Color="Color.Primary" OnClick="@Submit">@(_isNew ? Localization.AddButton : Localization.UpdateButton)</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    public FanControlCondition ConditionToEdit { get; set; } = new();
+
+    [Parameter]
+    public List<SensorData> AvailableSensors { get; set; } = new();
+
+    private FanControlCondition _condition = new();
+    private MudForm? _form;
+    private bool _success;
+    private bool _isNew = true;
+
+    protected override void OnInitialized()
+    {
+        _condition = ConditionToEdit;
+        _isNew = _condition.Id == 0;
+        
+        LocalizationService.OnLanguageChanged += StateHasChanged;
+    }
+
+    private string GetOperatorDisplayName(TriggerOperator op)
+    {
+        return op switch
+        {
+            TriggerOperator.GreaterThan => Localization.OperatorGreaterThan,
+            TriggerOperator.LessThan => Localization.OperatorLessThan,
+            TriggerOperator.EqualTo => Localization.OperatorEqualTo,
+            _ => op.ToString()
+        };
+    }
+
+    private async Task Submit()
+    {
+        await _form!.Validate();
+        if (_success)
+        {
+            MudDialog.Close(DialogResult.Ok(_condition));
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    public void Dispose()
+    {
+        LocalizationService.OnLanguageChanged -= StateHasChanged;
+    }
+} 

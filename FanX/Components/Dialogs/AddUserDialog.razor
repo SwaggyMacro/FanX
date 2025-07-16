@@ -1,0 +1,46 @@
+@using FanX.Resources
+@inject UserService UserService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">@Localization.AddUser</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudForm Model="@_model" @ref="_form">
+            <MudTextField T="string" @bind-Value="_model.Username" Label="@Localization.Username" Required="true" For="@(() => _model.Username)" />
+            <MudTextField T="string" @bind-Value="_model.Email" Label="@Localization.Email" Required="true" For="@(() => _model.Email)" />
+            <MudTextField T="string" @bind-Value="_model.Password" Label="@Localization.Password" Required="true" InputType="InputType.Password" For="@(() => _model.Password)" />
+            <MudTextField T="string" @bind-Value="_model.ConfirmPassword" Label="@Localization.ConfirmPassword" Required="true" InputType="InputType.Password" Error="@IsConfirmMismatch" ErrorText="@Localization.ConfirmPasswordMismatch" For="@(() => _model.ConfirmPassword)" />
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@Cancel" StartIcon="@Icons.Material.Filled.Close">@Localization.Cancel</MudButton>
+        <MudButton OnClick="@Submit" StartIcon="@Icons.Material.Filled.Check" Color="Color.Primary"
+                   Disabled="@IsSubmitDisabled">@Localization.AddUser</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance? MudDialog { get; set; }
+    private RegisterDto _model = new();
+    private MudForm? _form;
+
+    private bool IsConfirmMismatch => !string.IsNullOrWhiteSpace(_model.ConfirmPassword) && _model.Password != _model.ConfirmPassword;
+    private bool IsSubmitDisabled => string.IsNullOrWhiteSpace(_model.Username)
+        || string.IsNullOrWhiteSpace(_model.Email)
+        || string.IsNullOrWhiteSpace(_model.Password)
+        || string.IsNullOrWhiteSpace(_model.ConfirmPassword)
+        || IsConfirmMismatch;
+
+    private async Task Submit()
+    {
+        await _form?.Validate()!;
+        if (IsSubmitDisabled) return;
+        var success = await UserService.RegisterUserAsync(_model);
+        MudDialog?.Close(DialogResult.Ok(success));
+        Snackbar.Add(success ? Localization.AddUserSuccess : Localization.AddUserFailed, success ? Severity.Success : Severity.Error);
+    }
+
+    private void Cancel() => MudDialog?.Cancel();
+} 

@@ -1,0 +1,71 @@
+@using FanX.Resources
+@inject LocalizationService LocalizationService
+@inject IDialogService DialogService
+@inject NavigationManager Navigation
+@inject UserService UserService
+@inject BrowserStorageService BrowserStorage
+@inject AuthenticationStateProvider AuthStateProvider
+
+<MudNavMenu>
+    <MudNavLink Href="/dashboard" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Dashboard">@Localization.Dashboard</MudNavLink>
+    <MudNavLink Href="/debug" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.BugReport">@Localization.Debug</MudNavLink>
+
+    <AuthorizeView>
+        <Authorized>
+            @if (context.User.IsInRole("Admin"))
+            {
+                <MudNavGroup Title="@Localization.Admin" Icon="@Icons.Material.Filled.AdminPanelSettings" Expanded="true">
+                    <MudNavLink Href="/ipmi-config" Icon="@Icons.Material.Filled.SettingsInputComponent">@Localization.IpmiConfiguration</MudNavLink>
+                    <MudNavLink Href="/ipmi-control" Icon="@Icons.Material.Filled.DeveloperBoard">@Localization.IpmiControl</MudNavLink>
+                    <MudNavLink Href="/user-management" Icon="@Icons.Material.Filled.Group">@Localization.UserManagement</MudNavLink>
+                    <MudNavLink Href="/fan-control" Icon="@Icons.Material.Filled.WindPower">@Localization.FanControl</MudNavLink>
+                    <MudNavLink Href="/notifications" Icon="@Icons.Material.Filled.Notifications">@Localization.Notifications</MudNavLink>
+                    <MudNavLink Href="/settings" Icon="@Icons.Material.Filled.Settings">@Localization.SystemSettings</MudNavLink>
+                </MudNavGroup>
+            }
+        </Authorized>
+    </AuthorizeView>
+
+    <MudNavGroup Title="@Localization.UserAccount" Icon="@Icons.Material.Filled.AccountCircle" Expanded="false">
+        <AuthorizeView>
+            <Authorized>
+                <MudNavLink OnClick="@OpenChangePasswordDialog" Icon="@Icons.Material.Filled.LockReset">@Localization.ChangePassword</MudNavLink>
+                <MudNavLink OnClick="@Logout" Icon="@Icons.Material.Filled.Logout">@Localization.Logout</MudNavLink>
+            </Authorized>
+            <NotAuthorized>
+                <MudNavLink Href="/login" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Login">@Localization.Login</MudNavLink>
+                <MudNavLink Href="/register" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.PersonAdd">@Localization.Register</MudNavLink>
+            </NotAuthorized>
+        </AuthorizeView>
+    </MudNavGroup>
+</MudNavMenu>
+
+@code {
+    protected override void OnInitialized()
+    {
+        LocalizationService.OnLanguageChanged += StateHasChanged;
+    }
+
+    private async Task Logout()
+    {
+        var token = await BrowserStorage.GetItemAsync("authToken");
+        await UserService.LogoutAsync(token);
+        await BrowserStorage.RemoveItemAsync("authToken");
+        if (AuthStateProvider is CustomAuthenticationStateProvider customAuthProv)
+        {
+            customAuthProv.MarkUserAsLoggedOut();
+        }
+        Navigation.NavigateTo("/", false);
+    }
+    
+    private void OpenChangePasswordDialog()
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        DialogService.Show<ChangePasswordDialog>(Localization.ChangePassword, options);
+    }
+
+    public void Dispose()
+    {
+        LocalizationService.OnLanguageChanged -= StateHasChanged;
+    }
+} 

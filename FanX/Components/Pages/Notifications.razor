@@ -1,0 +1,338 @@
+@page "/notifications"
+@attribute [Authorize(Roles = "Admin")]
+@using FanX.Resources
+@inject NotificationService NotificationService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject LocalizationService LocalizationService
+@implements IDisposable
+
+<PageTitle>@Localization.Notifications</PageTitle>
+
+<MudText Typo="Typo.h4" GutterBottom="true">@Localization.NotificationSettings</MudText>
+
+@if (_setting == null)
+{
+    <MudProgressCircular Indeterminate="true"></MudProgressCircular>
+}
+else
+{
+    <MudCard>
+        <MudCardContent>
+            <MudGrid Spacing="4">
+                <MudItem xs="12">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" role="switch"
+                               checked="@_setting.IsEnabled"
+                               @onchange="e => { if (e.Value is bool v) OnEnableNotificationsChanged(v); }" />
+                        <label class="form-check-label">@Localization.EnableNotifications</label>
+                    </div>
+                </MudItem>
+                
+                <MudItem xs="12">
+                    <MudExpansionPanels>
+                        <MudExpansionPanel Text="@Localization.WebhookSettings">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch"
+                                       checked="@_setting.WebhookEnabled"
+                                       @onchange="e => { if (e.Value is bool v) OnWebhookEnabledChanged(v); }" />
+                                <label class="form-check-label">@Localization.EnableWebhook</label>
+                            </div>
+                            <MudTextField @bind-Value="@_setting.WebhookUrl" Label="@Localization.WebhookURL" Variant="Variant.Outlined" Class="mt-4"></MudTextField>
+                            <MudSelect T="WebhookMethod" @bind-Value="@_setting.WebhookRequestMethod" Label="@Localization.WebhookRequestMethod" Variant="Variant.Outlined" Class="mt-2">
+                                @foreach (WebhookMethod method in Enum.GetValues(typeof(WebhookMethod)))
+                                {
+                                    <MudSelectItem Value="method">@method.ToString()</MudSelectItem>
+                                }
+                            </MudSelect>
+                            <MudTextField @bind-Value="@_setting.WebhookBodyTemplate" Label="@Localization.WebhookBodyTemplate" Variant="Variant.Outlined" Class="mt-2" Lines="5" />
+                            <MudText Typo="Typo.caption">@Localization.WebhookTemplateHelpText</MudText>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="@TestWebhook" Class="mt-2">@Localization.TestButton</MudButton>
+                        </MudExpansionPanel>
+                        <MudExpansionPanel Text="@Localization.TelegramSettings">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch"
+                                       checked="@_setting.TelegramEnabled"
+                                       @onchange="e => { if (e.Value is bool v) OnTelegramEnabledChanged(v); }" />
+                                <label class="form-check-label">@Localization.EnableTelegramBot</label>
+                            </div>
+                            <MudTextField @bind-Value="@_setting.TelegramBotToken" Label="@Localization.TelegramBotToken" Variant="Variant.Outlined" Class="mt-4"></MudTextField>
+                            <MudTextField @bind-Value="@_setting.TelegramChatId" Label="@Localization.TelegramChatID" Variant="Variant.Outlined" Class="mt-2"></MudTextField>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="@TestTelegram" Class="mt-2">@Localization.TestButton</MudButton>
+                        </MudExpansionPanel>
+                        <MudExpansionPanel Text="@Localization.WeComBotSettings">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch"
+                                       checked="@_setting.WeComBotEnabled"
+                                       @onchange="e => { if (e.Value is bool v) OnWeComBotEnabledChanged(v); }" />
+                                <label class="form-check-label">@Localization.EnableWeComBot</label>
+                            </div>
+                            <MudTextField @bind-Value="@_setting.WeComBotKey" Label="@Localization.WeComBotKey" Variant="Variant.Outlined" Class="mt-4"></MudTextField>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="@TestWeComBot" Class="mt-2">@Localization.TestButton</MudButton>
+                        </MudExpansionPanel>
+                        <MudExpansionPanel Text="@Localization.EmailSettings">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch"
+                                       checked="@_setting.EmailEnabled"
+                                       @onchange="e => { if (e.Value is bool v) OnEmailEnabledChanged(v); }" />
+                                <label class="form-check-label">@Localization.EnableEmailNotifications</label>
+                            </div>
+                            <MudTextField @bind-Value="_setting.EmailRecipients"
+                                          Label="@Localization.EmailRecipients"
+                                          Variant="Variant.Outlined"
+                                          Class="mt-4" />
+                            <MudTextField @bind-Value="_setting.SmtpHost"
+                                          Label="@Localization.SmtpHost"
+                                          Variant="Variant.Outlined"
+                                          Class="mt-4" />
+                            <MudNumericField T="int"
+                                          @bind-Value="_setting.SmtpPort"
+                                          Label="@Localization.SmtpPort"
+                                          Variant="Variant.Outlined"
+                                          Class="mt-2" Min="0" />
+                            <MudTextField @bind-Value="_setting.SmtpUser"
+                                          Label="@Localization.SmtpUser"
+                                          Variant="Variant.Outlined"
+                                          Class="mt-2" />
+                            <MudTextField @bind-Value="_setting.SmtpPass"
+                                          Label="@Localization.SmtpPassword"
+                                          Variant="Variant.Outlined"
+                                          InputType="InputType.Password"
+                                          Class="mt-2" />
+                            <div class="form-check form-switch mt-2">
+                                <input class="form-check-input" type="checkbox" role="switch"
+                                       checked="@_setting.SmtpEnableSsl"
+                                       @onchange="e => { if (e.Value is bool v) OnSmtpEnableSslChanged(v); }" />
+                                <label class="form-check-label">@Localization.EnableSsl</label>
+                            </div>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="@TestEmail" Class="mt-2" Style="margin-left:-1rem;">@Localization.TestButton</MudButton>
+                        </MudExpansionPanel>
+                    </MudExpansionPanels>
+                </MudItem>
+            </MudGrid>
+        </MudCardContent>
+        <MudCardActions>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save" OnClick="@SaveChanges">@Localization.SaveSettings</MudButton>
+        </MudCardActions>
+    </MudCard>
+}
+
+<MudText Typo="Typo.h4" Class="mt-8" GutterBottom="true">@Localization.NotificationRules</MudText>
+
+<MudTable T="NotificationRule" ServerData="ServerReload"
+          Dense="true" Hover="true" @ref="_table">
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">@Localization.Rules</MudText>
+        <MudSpacer />
+        <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.Add" OnClick="@(() => OpenAddEditDialog(0))">@Localization.AddRule</MudButton>
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh>@Localization.RuleName</MudTh>
+        <MudTh>@Localization.Conditions</MudTh>
+        <MudTh>@Localization.CooldownMins</MudTh>
+        <MudTh>@Localization.Enabled</MudTh>
+        <MudTh>@Localization.Actions</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="@Localization.RuleName">@context.Name</MudTd>
+        <MudTd DataLabel="@Localization.Conditions">@context.Conditions.Count</MudTd>
+        <MudTd DataLabel="@Localization.CooldownMins">@context.FrequencyMinutes</MudTd>
+        <MudTd DataLabel="@Localization.Enabled">
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" role="switch" checked="@context.IsEnabled" disabled />
+            </div>
+        </MudTd>
+        <MudTd DataLabel="@Localization.Actions">
+            <MudIconButton Icon="@Icons.Material.Filled.Edit" Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" OnClick="@(() => OpenAddEditDialog(context.Id))" />
+            <MudIconButton Icon="@Icons.Material.Filled.Delete" Variant="Variant.Filled" Color="Color.Error" Size="Size.Small" Class="ml-2" OnClick="@(() => DeleteRule(context.Id))"/>
+        </MudTd>
+    </RowTemplate>
+    <PagerContent>
+        <MudTablePager />
+    </PagerContent>
+</MudTable>
+
+@code {
+    private NotificationSetting? _setting;
+    private MudTable<NotificationRule> _table = new();
+    private List<NotificationRule> _rules = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _setting = await NotificationService.GetNotificationSettingAsync();
+        LocalizationService.OnLanguageChanged += StateHasChanged;
+    }
+    
+    private void OnEnableNotificationsChanged(bool value)
+    {
+        if (_setting != null) _setting.IsEnabled = value;
+        StateHasChanged();
+    }
+
+    private void OnWebhookEnabledChanged(bool value)
+    {
+        if (_setting != null) _setting.WebhookEnabled = value;
+        StateHasChanged();
+    }
+
+    private void OnTelegramEnabledChanged(bool value)
+    {
+        if (_setting != null) _setting.TelegramEnabled = value;
+        StateHasChanged();
+    }
+
+    private void OnWeComBotEnabledChanged(bool value)
+    {
+        if (_setting != null) _setting.WeComBotEnabled = value;
+        StateHasChanged();
+    }
+    private void OnEmailEnabledChanged(bool value)
+    {
+        if (_setting != null) _setting.EmailEnabled = value;
+        StateHasChanged();
+    }
+    private void OnSmtpEnableSslChanged(bool value)
+    {
+        if (_setting != null) _setting.SmtpEnableSsl = value;
+        StateHasChanged();
+    }
+
+    private async Task<TableData<NotificationRule>> ServerReload(TableState state, CancellationToken cancellationToken)
+    {
+        _rules = await NotificationService.GetNotificationRulesAsync();
+        return new TableData<NotificationRule>() {TotalItems = _rules.Count(), Items = _rules};
+    }
+
+    private async Task SaveChanges()
+    {
+        if (_setting != null)
+        {
+            var success = await NotificationService.SaveNotificationSettingAsync(_setting);
+            if (success)
+            {
+                Snackbar.Add(Localization.SettingsSavedSuccess, Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add(Localization.SettingsSaveFailed, Severity.Error);
+            }
+        }
+    }
+    
+    private async Task TestWebhook()
+    {
+        if (_setting == null) return;
+        var success = await NotificationService.SendTestWebhookAsync(_setting, Localization.TestMessageTitle, Localization.TestMessageBody);
+        if (success)
+        {
+            Snackbar.Add(Localization.TestSuccessMessage, Severity.Success);
+        }
+        else
+        {
+            Snackbar.Add(Localization.TestFailedMessage, Severity.Error);
+        }
+    }
+
+    private async Task TestTelegram()
+    {
+        if (_setting == null) return;
+        var success = await NotificationService.SendTestTelegramAsync(_setting, Localization.TestMessageTitle, Localization.TestMessageBody);
+        if (success)
+        {
+            Snackbar.Add(Localization.TestSuccessMessage, Severity.Success);
+        }
+        else
+        {
+            Snackbar.Add(Localization.TestFailedMessage, Severity.Error);
+        }
+    }
+
+    private async Task TestWeComBot()
+    {
+        if (_setting == null) return;
+        var success = await NotificationService.SendTestWeComBotAsync(_setting, Localization.TestMessageTitle, Localization.TestMessageBody);
+        if (success)
+        {
+            Snackbar.Add(Localization.TestSuccessMessage, Severity.Success);
+        }
+        else
+        {
+            Snackbar.Add(Localization.TestFailedMessage, Severity.Error);
+        }
+    }
+
+    private async Task TestEmail()
+    {
+        if (_setting == null) return;
+        var success = await NotificationService.SendTestEmailAsync(_setting, Localization.TestMessageTitle, Localization.TestMessageBody);
+        if (success)
+            Snackbar.Add(Localization.TestSuccessMessage, Severity.Success);
+        else
+            Snackbar.Add(Localization.TestFailedMessage, Severity.Error);
+    }
+
+    private async Task DeleteRule(int id)
+    {
+        var result = await DialogService.ShowMessageBox(
+            Localization.DeleteRuleConfirmTitle, 
+            Localization.DeleteRuleConfirmMessage,
+            yesText:Localization.Delete, 
+            cancelText:Localization.Cancel);
+
+        if (result == true)
+        {
+            var success = await NotificationService.DeleteNotificationRuleAsync(id);
+            if (success)
+            {
+                Snackbar.Add(Localization.RuleDeleted, Severity.Success);
+                if(_table != null) await _table.ReloadServerData();
+            }
+            else
+            {
+                Snackbar.Add(Localization.RuleDeleteFailed, Severity.Error);
+            }
+        }
+    }
+    
+    private async Task OpenAddEditDialog(int id)
+    {
+        var parameters = new DialogParameters { ["RuleId"] = id };
+        var title = id == 0 ? Localization.AddRule : Localization.EditRule;
+        var dialog = await DialogService.ShowAsync<AddEditNotificationRuleDialog>(title, parameters);
+        var result = await dialog.Result;
+
+        if (result is { Canceled: false })
+        {
+            if(_table != null) await _table.ReloadServerData();
+        }
+    }
+
+    public void Dispose()
+    {
+        LocalizationService.OnLanguageChanged -= StateHasChanged;
+    }
+} 
+<style>
+    .form-check.form-switch .form-check-input {
+        width: 3.0rem;
+        height: 1.5rem;
+        font-size: 1.15rem;
+        transition: background-position .2s ease-in-out, background-color .3s ease, border-color .3s ease !important;
+    }
+
+    .form-check-input:focus {
+        border-color: #86b7fe !important;
+        outline: 0 !important;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, .25) !important;
+    }
+    .form-check.form-switch {
+        padding-left: 3.5rem !important;
+    }
+    .form-check.form-switch .form-check-label {
+        margin-left: 1rem;
+        font-size: 1.15rem;
+        line-height: 1.5rem;
+        position: relative;
+        top: 0.15rem;
+    }
+</style> 

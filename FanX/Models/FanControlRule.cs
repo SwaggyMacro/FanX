@@ -1,0 +1,24 @@
+using SqlSugar;
+
+namespace FanX.Models;
+
+[SugarTable("FanControlRules")]
+public class FanControlRule
+{
+    [SugarColumn(IsPrimaryKey = true, IsIdentity = true)]
+    public int Id { get; set; }
+
+    public bool IsEnabled { get; set; } = true;
+
+    public string Name { get; set; } = string.Empty;
+
+    public int TargetFanSpeedPercent { get; set; }
+
+    public string TargetFanNamesJson { get; set; } = "[]";
+
+    [SugarColumn(IsIgnore = true)]
+    public List<string> TargetFanNames { get; set; } = new();
+    
+    [SugarColumn(IsIgnore = true)]
+    public List<FanControlCondition> Conditions { get; set; } = new();
+} 

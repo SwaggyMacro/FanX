@@ -1,0 +1,164 @@
+@page "/user-management"
+@attribute [Authorize(Roles = "Admin")]
+@using FanX.Resources
+@inject UserService UserService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@inject LocalizationService LocalizationService
+@inject AuthenticationStateProvider AuthStateProvider
+
+<PageTitle>@Localization.UserManagement</PageTitle>
+
+<MudText Typo="Typo.h5" GutterBottom="true">@Localization.UserManagement</MudText>
+
+<MudPaper Class="pa-4">
+    <MudTable Items="_users" Dense="true" Hover="true" Striped="true">
+        <HeaderContent>
+            <MudTh>@Localization.Username</MudTh>
+            <MudTh>@Localization.Email</MudTh>
+            <MudTh>@Localization.Role</MudTh>
+            <MudTh>@Localization.Active</MudTh>
+            <MudTh>@Localization.Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="@Localization.Username">@context.Username</MudTd>
+            <MudTd DataLabel="@Localization.Email">@context.Email</MudTd>
+            <MudTd DataLabel="@Localization.Role">@context.Role</MudTd>
+            <MudTd DataLabel="@Localization.Active">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" role="switch"
+                           checked="@context.IsActive"
+                           @onchange="@(async (ChangeEventArgs e) => { if (e.Value is bool v) await ToggleActive(context, v); })"
+                           disabled="@(context.Username == _currentUsername)" />
+                </div>
+            </MudTd>
+            <MudTd DataLabel="@Localization.Actions">
+                @if (context.Username != _currentUsername)
+                {
+                    @if (context.Role != "Admin")
+                    {
+                        <MudIconButton Icon="@Icons.Material.Filled.AdminPanelSettings" Title="@Localization.PromoteToAdmin" Color="Color.Primary" Size="Size.Small" OnClick='@(async () => await ChangeRole(context, "Admin"))' />
+                    }
+                    else
+                    {
+                        <MudIconButton Icon="@Icons.Material.Filled.PersonRemove" Title="@Localization.DemoteToUser" Color="Color.Secondary" Size="Size.Small" OnClick='@(async () => await ChangeRole(context, "User"))' />
+                    }
+                    <MudIconButton Icon="@Icons.Material.Filled.LockReset" Title="@Localization.ResetPassword" Color="Color.Info" Size="Size.Small" OnClick='@(async () => await OpenResetPasswordDialog(context))' />
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(async () => await DeleteUser(context.Id))" />
+                }
+            </MudTd>
+        </RowTemplate>
+        <ToolBarContent>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PersonAdd" OnClick="OpenAddUserDialog">
+                @Localization.AddUser
+            </MudButton>
+            <MudButton Class="ms-2" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Refresh" OnClick="@(async () => await LoadUsers())">
+                @Localization.Refresh
+            </MudButton>
+        </ToolBarContent>
+    </MudTable>
+</MudPaper>
+
+@code {
+    private List<User> _users = new();
+    private string _currentUsername = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        _currentUsername = authState.User.Identity?.Name ?? string.Empty;
+        LocalizationService.OnLanguageChanged += StateHasChanged;
+        await LoadUsers();
+    }
+
+    private async Task LoadUsers()
+    {
+        _users = await UserService.GetAllUsersAsync();
+    }
+
+    private async Task ChangeRole(User user, string newRole)
+    {
+        var success = await UserService.UpdateUserRoleAsync(user.Id, newRole);
+        if (success)
+        {
+            Snackbar.Add(Localization.UpdateUserSuccess, Severity.Success);
+            await LoadUsers();
+        }
+        else
+        {
+            Snackbar.Add(Localization.UpdateUserFailed, Severity.Error);
+        }
+    }
+
+    private async Task ToggleActive(User user, bool isActive)
+    {
+        var success = await UserService.SetUserActiveAsync(user.Id, isActive);
+        if (success)
+        {
+            Snackbar.Add(Localization.UpdateUserSuccess, Severity.Success);
+        }
+        else
+        {
+            Snackbar.Add(Localization.UpdateUserFailed, Severity.Error);
+        }
+    }
+
+    private async Task DeleteUser(int id)
+    {
+        var confirmed = await DialogService.ShowMessageBox(
+            Localization.ConfirmDeleteUserTitle,
+            Localization.ConfirmDeleteUserMessage,
+            yesText: Localization.Delete,
+            cancelText: Localization.Cancel) ?? false;
+        if (!confirmed) return;
+
+        var success = await UserService.DeleteUserAsync(id);
+        if (success)
+        {
+            Snackbar.Add(Localization.DeleteUserSuccess, Severity.Success);
+            await LoadUsers();
+        }
+        else
+        {
+            Snackbar.Add(Localization.DeleteUserFailed, Severity.Error);
+        }
+    }
+
+    private async Task OpenResetPasswordDialog(User user)
+    {
+        var parameters = new DialogParameters { ["UserToReset"] = user };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<ResetPasswordDialog>(Localization.ResetPassword, parameters, options);
+        var result = await dialog.Result;
+        if (result is { Canceled: false, Data: bool success } && success)
+        {
+            await LoadUsers();
+        }
+    }
+    private async Task OpenAddUserDialog()
+    {
+        var parameters = new DialogParameters();
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<AddUserDialog>(Localization.AddUser, parameters, options);
+        var result = await dialog.Result;
+        if (result is { Canceled: false, Data: bool success } && success)
+        {
+            await LoadUsers();
+        }
+    }
+} 
+
+<style>
+    .form-check.form-switch .form-check-input {
+        width: 3.0rem;
+        height: 1.5rem;
+        font-size: 1.15rem;
+        transition: background-position .2s ease-in-out, background-color .3s ease, border-color .3s ease !important;
+    }
+
+    .form-check-input:focus {
+        border-color: #86b7fe !important;
+        outline: 0 !important;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, .25) !important;
+    }
+</style> 

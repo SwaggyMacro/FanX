@@ -1,0 +1,88 @@
+@page "/login"
+@using FanX.Resources
+@inject UserService UserService
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+@inject LocalizationService LocalizationService
+@inject BrowserStorageService BrowserStorage
+@inject AuthenticationStateProvider AuthStateProvider
+
+<PageTitle>@Localization.LoginTitle</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="mt-16">
+    <MudPaper Elevation="3" Class="pa-8">
+        <MudText Typo="Typo.h4" Align="Align.Center" Class="mb-6">@Localization.LoginTitle</MudText>
+        
+        <EditForm Model="@_loginModel" OnValidSubmit="HandleLogin">
+            <DataAnnotationsValidator />
+            <MudTextField @bind-Value="_loginModel.Username" Label="@Localization.Username" Required="true" For="() => _loginModel.Username" Class="mb-4" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Person" />
+            <MudTextField @bind-Value="_loginModel.Password" Label="@Localization.Password" Required="true" For="() => _loginModel.Password" InputType="@(_isPasswordVisible ? InputType.Text : InputType.Password)" Adornment="Adornment.End" AdornmentIcon="@_passwordAdornmentIcon" OnAdornmentClick="TogglePasswordVisibility" Class="mb-4" />
+            <MudButton ButtonType="ButtonType.Submit"
+                       Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       FullWidth="true"
+                       Class="mb-4"
+                       Disabled="_isLoading"
+                       StartIcon="@Icons.Material.Filled.Login">
+                @(_isLoading ? Localization.LoggingIn : Localization.LoginButton)
+            </MudButton>
+        </EditForm>
+        <MudDivider Class="my-4" />
+        <MudButton Variant="Variant.Text"
+                   Color="Color.Primary"
+                   FullWidth="true"
+                   StartIcon="@Icons.Material.Filled.PersonAdd"
+                   OnClick="@(() => Navigation.NavigateTo("/register"))">
+            @Localization.NoAccount
+        </MudButton>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private readonly LoginDto _loginModel = new();
+    private bool _isPasswordVisible;
+    private string _passwordAdornmentIcon = Icons.Material.Filled.VisibilityOff;
+    private bool _isLoading;
+
+    protected override void OnInitialized()
+    {
+        LocalizationService.OnLanguageChanged += StateHasChanged;
+    }
+
+    private void TogglePasswordVisibility()
+    {
+        _isPasswordVisible = !_isPasswordVisible;
+        _passwordAdornmentIcon = _isPasswordVisible ? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff;
+    }
+
+    private async Task HandleLogin()
+    {
+        _isLoading = true;
+        
+        var token = await UserService.LoginAsync(_loginModel);
+        if (!string.IsNullOrEmpty(token))
+        {
+            await BrowserStorage.SetItemAsync("authToken", token);
+            if (AuthStateProvider is CustomAuthenticationStateProvider customAuthProvider)
+            {
+                var user = await UserService.ValidateTokenAsync(token);
+                if (user != null)
+                {
+                    customAuthProvider.MarkUserAsAuthenticated(user);
+                }
+            }
+            Navigation.NavigateTo("/", false);
+        }
+        else
+        {
+            Snackbar.Add(Localization.LoginError, Severity.Error);
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    public void Dispose()
+    {
+        LocalizationService.OnLanguageChanged -= StateHasChanged;
+    }
+}

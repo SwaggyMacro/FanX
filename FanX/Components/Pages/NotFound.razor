@@ -1,0 +1,24 @@
+@using FanX.Resources
+@inject LocalizationService LocalizationService
+@implements IDisposable
+
+<PageTitle>@Localization.PageNotFound</PageTitle>
+<MudContainer>
+    <MudText Typo="Typo.h3" Align="Align.Center">@Localization.PageNotFound</MudText>
+    <MudText Align="Align.Center" Class="my-4">@Localization.PageNotFoundMessage</MudText>
+    <div class="d-flex justify-center">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/">@Localization.GoHome</MudButton>
+    </div>
+</MudContainer>
+
+@code {
+    protected override void OnInitialized()
+    {
+        LocalizationService.OnLanguageChanged += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        LocalizationService.OnLanguageChanged -= StateHasChanged;
+    }
+} 

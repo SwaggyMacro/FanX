@@ -1,0 +1,94 @@
+@using FanX.Resources
+@inject LocalizationService LocalizationService
+@inject DatabaseService DbService
+@implements IDisposable
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="_form" @bind-IsValid="@_success">
+            <MudSelect T="string" @bind-Value="@_condition.SensorName" Label="@Localization.Sensor" Required="true">
+                @if (!_sensorNames.Any())
+                {
+                    <MudSelectItem Value="@("Loading...")" Disabled="true">@Localization.Loading</MudSelectItem>
+                }
+                else
+                {
+                    @foreach (var name in _sensorNames)
+                    {
+                        <MudSelectItem Value="@name">@name</MudSelectItem>
+                    }
+                }
+            </MudSelect>
+            <MudSelect T="TriggerOperator" @bind-Value="@_condition.Operator" Label="@Localization.Operator" Required="true" Class="mt-4">
+                @foreach (TriggerOperator op in Enum.GetValues(typeof(TriggerOperator)))
+                {
+                    <MudSelectItem Value="@op">@GetOperatorDisplayName(op)</MudSelectItem>
+                }
+            </MudSelect>
+            <MudNumericField @bind-Value="@_condition.Threshold" Label="@Localization.Threshold" Required="true" Class="mt-4" />
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@Cancel">@Localization.Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="@Submit">@(_isNew ? Localization.AddButton : Localization.UpdateButton)</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    public NotificationCondition ConditionToEdit { get; set; } = new();
+
+    private NotificationCondition _condition = new();
+    private MudForm? _form;
+    private bool _success;
+    private bool _isNew = true;
+    private List<string?> _sensorNames = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _condition = ConditionToEdit;
+        _isNew = _condition.Id == 0;
+        
+        LocalizationService.OnLanguageChanged += StateHasChanged;
+        await LoadSensorNamesAsync();
+    }
+
+    private async Task LoadSensorNamesAsync()
+    {
+        _sensorNames = await DbService.Db.Queryable<SensorData>()
+            .Select(s => s.SensorName)
+            .Distinct()
+            .ToListAsync();
+        StateHasChanged();
+    }
+
+    private string GetOperatorDisplayName(TriggerOperator op)
+    {
+        return op switch
+        {
+            TriggerOperator.GreaterThan => Localization.OperatorGreaterThan,
+            TriggerOperator.LessThan => Localization.OperatorLessThan,
+            TriggerOperator.EqualTo => Localization.OperatorEqualTo,
+            _ => op.ToString()
+        };
+    }
+
+    private async Task Submit()
+    {
+        await _form!.Validate();
+        if (_success)
+        {
+            MudDialog.Close(DialogResult.Ok(_condition));
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    public void Dispose()
+    {
+        LocalizationService.OnLanguageChanged -= StateHasChanged;
+    }
+} 

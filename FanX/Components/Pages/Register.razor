@@ -1,0 +1,172 @@
+@page "/register"
+@using FanX.Resources
+@inject UserService UserService
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+@inject LocalizationService LocalizationService
+@inject DatabaseService DatabaseService
+
+<PageTitle>@Localization.RegisterTitle</PageTitle>
+
+@if (!_settingsLoaded)
+{
+    <MudProgressCircular Indeterminate="true" Class="mt-16" />
+}
+else if (!_allowRegistration)
+{
+    <MudAlert Severity="Severity.Warning" Class="mt-16">@Localization.RegistrationDisabled</MudAlert>
+}
+else
+{
+    <MudContainer MaxWidth="MaxWidth.Small" Class="mt-16">
+        <MudPaper Elevation="3" Class="pa-8">
+            <MudText Typo="Typo.h4" Align="Align.Center" Class="mb-6">@Localization.RegisterTitle</MudText>
+            
+            <EditForm Model="@_registerModel" OnValidSubmit="@HandleRegister">
+                <DataAnnotationsValidator />
+                
+                <MudTextField @bind-Value="_registerModel.Username"
+                             Label="@Localization.Username"
+                             Variant="Variant.Outlined"
+                             Class="mb-4"
+                             For="@(() => _registerModel.Username)"
+                             Adornment="Adornment.Start"
+                             AdornmentIcon="@Icons.Material.Filled.Person" />
+
+                <MudTextField @bind-Value="_registerModel.Email"
+                             Label="@Localization.Email"
+                             Variant="Variant.Outlined"
+                             Class="mb-4"
+                             For="@(() => _registerModel.Email)"
+                             Adornment="Adornment.Start"
+                             AdornmentIcon="@Icons.Material.Filled.Email" />
+
+                <MudTextField @bind-Value="_registerModel.Password"
+                             Label="@Localization.Password"
+                             Variant="Variant.Outlined"
+                             InputType="@_passwordInputType"
+                             Class="mb-4"
+                             For="@(() => _registerModel.Password)"
+                             Adornment="Adornment.End"
+                             AdornmentIcon="@_passwordAdornmentIcon"
+                             OnAdornmentClick="@TogglePasswordVisibility" />
+
+                <MudTextField @bind-Value="_registerModel.ConfirmPassword"
+                             Label="@Localization.ConfirmPassword"
+                             Variant="Variant.Outlined"
+                             InputType="@_confirmPasswordInputType"
+                             Class="mb-4"
+                             For="@(() => _registerModel.ConfirmPassword)"
+                             Adornment="Adornment.End"
+                             AdornmentIcon="@_confirmPasswordAdornmentIcon"
+                             OnAdornmentClick="@ToggleConfirmPasswordVisibility" />
+
+                <MudButton ButtonType="ButtonType.Submit"
+                          Variant="Variant.Filled"
+                          Color="Color.Primary"
+                          FullWidth="true"
+                          Class="mb-4"
+                          Disabled="@_isLoading"
+                          StartIcon="@Icons.Material.Filled.PersonAdd">
+                    @if (_isLoading)
+                    {
+                        <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                        <MudText Class="ml-2">@Localization.Registering</MudText>
+                    }
+                    else
+                    {
+                        <MudText>@Localization.RegisterButton</MudText>
+                    }
+                </MudButton>
+
+                <MudDivider Class="mb-4" />
+                
+                <MudButton Variant="Variant.Text"
+                          Color="Color.Primary"
+                          FullWidth="true"
+                          StartIcon="@Icons.Material.Filled.Login"
+                          OnClick="@(() => Navigation.NavigateTo("/login"))">
+                    @Localization.HasAccount
+                </MudButton>
+            </EditForm>
+        </MudPaper>
+    </MudContainer>
+}
+
+@code {
+    private RegisterDto _registerModel = new();
+    private bool _isLoading;
+    
+    private bool _isPasswordVisible;
+    private InputType _passwordInputType = InputType.Password;
+    private string _passwordAdornmentIcon = Icons.Material.Filled.VisibilityOff;
+    
+    private bool _isConfirmPasswordVisible;
+    private InputType _confirmPasswordInputType = InputType.Password;
+    private string _confirmPasswordAdornmentIcon = Icons.Material.Filled.VisibilityOff;
+
+    private bool _allowRegistration = true;
+    private bool _settingsLoaded;
+
+    protected override async Task OnInitializedAsync()
+    {
+        LocalizationService.OnLanguageChanged += StateHasChanged;
+        var exists = await DatabaseService.Db.Queryable<AppSetting>().AnyAsync(s => s.Key == "AllowRegistration");
+        if (exists)
+        {
+            var setting = await DatabaseService.Db.Queryable<AppSetting>().Where(s => s.Key == "AllowRegistration").FirstAsync();
+            _allowRegistration = bool.TryParse(setting.Value, out var v) && v;
+        }
+        _settingsLoaded = true;
+    }
+
+    private async Task HandleRegister()
+    {
+        if (!_allowRegistration)
+        {
+            Snackbar.Add("Registration is currently disabled.", Severity.Warning);
+            return;
+        }
+        _isLoading = true;
+        try
+        {
+            var success = await UserService.RegisterUserAsync(_registerModel);
+            if (success)
+            {
+                Snackbar.Add(Localization.RegisterSuccess, Severity.Success);
+                Navigation.NavigateTo("/login");
+            }
+            else
+            {
+                Snackbar.Add(Localization.RegisterError, Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"{Localization.RegisterError}：{ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private void TogglePasswordVisibility()
+    {
+        _isPasswordVisible = !_isPasswordVisible;
+        _passwordInputType = _isPasswordVisible ? InputType.Text : InputType.Password;
+        _passwordAdornmentIcon = _isPasswordVisible ? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff;
+    }
+
+    private void ToggleConfirmPasswordVisibility()
+    {
+        _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
+        _confirmPasswordInputType = _isConfirmPasswordVisible ? InputType.Text : InputType.Password;
+        _confirmPasswordAdornmentIcon = _isConfirmPasswordVisible ? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff;
+    }
+
+    public void Dispose()
+    {
+        LocalizationService.OnLanguageChanged -= StateHasChanged;
+    }
+}

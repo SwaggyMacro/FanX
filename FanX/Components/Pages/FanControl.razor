@@ -1,0 +1,167 @@
+@page "/fan-control"
+@attribute [Authorize(Roles = "Admin")]
+@using FanX.Resources
+@inject FanControlService FanControlService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@inject LocalizationService LocalizationService
+@inject SensorDataService SensorDataService
+@implements IDisposable
+
+<PageTitle>@Localization.FanControlSettings</PageTitle>
+
+<MudPaper Class="pa-4 mb-4">
+    <MudText Typo="Typo.h6" GutterBottom="true">@Localization.FanControlMode</MudText>
+    <MudSelect T="FanControlMode"
+               Variant="Variant.Filled"
+               Value="SelectedMode"
+               ValueChanged="OnSelectedModeChanged"
+               Label="@Localization.SelectMode">
+        <MudSelectItem Value="FanControlMode.Manual">@Localization.ManualMode</MudSelectItem>
+        <MudSelectItem Value="FanControlMode.Automatic">@Localization.AutomaticSystemDefault</MudSelectItem>
+        <MudSelectItem Value="FanControlMode.Smart">@Localization.SmartRuleBased</MudSelectItem>
+    </MudSelect>
+</MudPaper>
+
+@if (SelectedMode == FanControlMode.Smart)
+{
+    <MudCard>
+        <MudTable Items="_rules" Dense="true" Hover="true" Striped="true">
+            <ToolBarContent>
+                <MudText Typo="Typo.h6">@Localization.SmartControlRules</MudText>
+                <MudSpacer />
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="@(() => OpenAddEditDialog(0))">@Localization.AddNewRule</MudButton>
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh>@Localization.Enabled</MudTh>
+                <MudTh>@Localization.RuleName</MudTh>
+                <MudTh>@Localization.Conditions</MudTh>
+                <MudTh>@Localization.TargetFanSpeed</MudTh>
+                <MudTh>@Localization.Actions</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="@Localization.Enabled">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" role="switch"
+                               style="cursor: pointer; margin-left: 2.5em;"
+                               checked="@context.IsEnabled"
+                               @onchange="@(async (ChangeEventArgs e) => {
+                                   if (e.Value is bool val)
+                                   {
+                                       context.IsEnabled = val;
+                                       await FanControlService.SaveRuleAsync(context);
+                                       StateHasChanged();
+                                   }
+                               })" />
+                    </div>
+                </MudTd>
+                <MudTd DataLabel="@Localization.RuleName">@context.Name</MudTd>
+                <MudTd DataLabel="@Localization.Conditions">@context.Conditions.Count</MudTd>
+                <MudTd DataLabel="@Localization.TargetFanSpeed">@context.TargetFanSpeedPercent %</MudTd>
+                <MudTd>
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" OnClick="@(() => OpenAddEditDialog(context.Id))"/>
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Variant="Variant.Filled" Color="Color.Error" Size="Size.Small" OnClick="@(() => DeleteRule(context.Id))"/>
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudCard>
+}
+
+<style>
+    .form-check.form-switch .form-check-input {
+        width: 3.0rem; /* Adjusted width */
+        height: 1.5rem; /* Adjusted height for proportion */
+        font-size: 1.15rem;
+        margin-left: -2rem !important;
+        transition: background-position .2s ease-in-out, background-color .3s ease, border-color .3s ease !important;
+    }
+
+    .form-check-input:focus {
+        border-color: #86b7fe !important;
+        outline: 0 !important;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, .25) !important;
+    }
+</style>
+
+@code {
+    private List<FanControlRule> _rules = new();
+    public FanControlMode SelectedMode { get; private set; }
+    private List<SensorData> _availableSensors = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadRules();
+        SelectedMode = await FanControlService.GetFanControlModeAsync();
+        LocalizationService.OnLanguageChanged += StateHasChanged;
+        await LoadAvailableSensors();
+    }
+
+    private async Task LoadAvailableSensors()
+    {
+        _availableSensors = await SensorDataService.GetSensorsAsync();
+        if (!_availableSensors.Any())
+        {
+            Snackbar.Add(Localization.FailedToLoadSensorList, Severity.Error);
+            LoggerService.Error($"Failed to load SDR list for FanControl page because the cached list is empty.");
+        }
+    }
+
+    private async Task OnSelectedModeChanged(FanControlMode newMode)
+    {
+        if (SelectedMode == newMode) return;
+
+        SelectedMode = newMode;
+        await FanControlService.SetFanControlModeAsync(newMode);
+        Snackbar.Add($"{Localization.FanControlMode} set to: {newMode}", Severity.Success);
+        StateHasChanged();
+    }
+    
+    private async Task LoadRules()
+    {
+        _rules = await FanControlService.GetRulesAsync();
+        if (_rules.Any())
+        {
+            LoggerService.Info($"[FanControl] LoadRules finished. First rule (ID {_rules.First().Id}) has IsEnabled = {_rules.First().IsEnabled}.");
+        }
+    }
+
+    private async Task OpenAddEditDialog(int ruleId)
+    {
+        var parameters = new DialogParameters
+        {
+            ["RuleId"] = ruleId,
+            ["AvailableSensors"] = _availableSensors
+        };
+        var title = ruleId == 0 ? Localization.AddNewRule : Localization.EditRule;
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium };
+        var dialogRef = await DialogService.ShowAsync<AddEditFanRuleDialog>(title, parameters, options);
+        
+        var result = await dialogRef.Result;
+        if (result is { Canceled: false })
+        {
+            await LoadRules();
+            StateHasChanged();
+        }
+    }
+
+    private async Task DeleteRule(int ruleId)
+    {
+        var result = await DialogService.ShowMessageBox(
+            Localization.ConfirmDeletion,
+            Localization.ConfirmDeleteMessage,
+            yesText:Localization.Delete, cancelText:Localization.Cancel);
+
+        if (result == true)
+        {
+            await FanControlService.DeleteRuleAsync(ruleId);
+            Snackbar.Add(Localization.RuleDeleted, Severity.Success);
+            await LoadRules();
+            StateHasChanged();
+        }
+    }
+
+    public void Dispose()
+    {
+        LocalizationService.OnLanguageChanged -= StateHasChanged;
+    }
+} 

@@ -1,0 +1,237 @@
+@using FanX.Resources
+@inject FanControlService FanControlService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject LocalizationService LocalizationService
+@inject SensorDataService SensorDataService
+@implements IDisposable
+
+<MudDialog>
+    <DialogContent>
+        @if (_rule == null)
+        {
+            <MudProgressCircular Indeterminate="true" />
+        }
+        else
+        {
+            <MudForm @ref="_form" @bind-IsValid="@_success" Class="mb-4">
+                <MudTextField @bind-Value="@_rule.Name" Label="@Localization.RuleName" Required="true" />
+                
+                <MudSelect T="string" Label="@Localization.TargetFans" MultiSelection="true"
+                           SelectedValues="_rule.TargetFanNames"
+                           SelectedValuesChanged="(values) => { if (values != null) _rule.TargetFanNames = values.ToList(); }"
+                           Required="true" RequiredError="@Localization.TargetFansRequiredError">
+                    @if (!_localSensors.Any(s => s.SensorType == "Fan"))
+                    {
+                        <MudSelectItem T="string" Value="@("Loading...")" Disabled="true">@Localization.Loading</MudSelectItem>
+                    }
+                    else
+                    {
+                        @foreach (var fanSensor in _localSensors.Where(s => s.SensorType == "Fan"))
+                        {
+                            <MudSelectItem T="string" Value="@fanSensor.SensorName">@fanSensor.SensorName</MudSelectItem>
+                        }
+                    }
+                </MudSelect>
+                
+                <MudNumericField @bind-Value="@_rule.TargetFanSpeedPercent" Label="@Localization.TargetFanSpeed" Required="true" Min="0" Max="100" Adornment="Adornment.End" AdornmentText="%" />
+
+                <div class="form-check form-switch mt-4">
+                    <input class="form-check-input" type="checkbox" role="switch"
+                           checked="@_rule.IsEnabled"
+                           @onchange="e => { if (e.Value is bool val) { _rule.IsEnabled = val; StateHasChanged(); } }" />
+                    <label class="form-check-label" style="margin-left:1rem;">@Localization.Enabled</label>
+                </div>
+            </MudForm>
+
+            <MudText Typo="Typo.h6" Class="mt-6 mb-2">@Localization.Conditions</MudText>
+            <MudText Typo="Typo.body2" Class="mb-4">@Localization.ConditionsHelpText</MudText>
+            
+            <MudTable Items="@_rule.Conditions" Dense="true" Hover="true" Striped="true">
+                <ToolBarContent>
+                    <MudText Typo="Typo.h6">@Localization.Conditions</MudText>
+                    <MudSpacer />
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => OpenConditionDialog())">@Localization.AddCondition</MudButton>
+                </ToolBarContent>
+                <HeaderContent>
+                    <MudTh>@Localization.Sensor</MudTh>
+                    <MudTh>@Localization.Operator</MudTh>
+                    <MudTh>Connector</MudTh>
+                    <MudTh>@Localization.Threshold</MudTh>
+                    <MudTh>@Localization.Actions</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="@Localization.Sensor">@context.SensorName</MudTd>
+                    <MudTd DataLabel="@Localization.Operator">@GetOperatorDisplayName(context.Operator)</MudTd>
+                    <MudTd DataLabel="Connector">@context.Connector</MudTd>
+                    <MudTd DataLabel="@Localization.Threshold">@context.Threshold</MudTd>
+                    <MudTd DataLabel="@Localization.Actions">
+                        <MudIconButton Icon="@Icons.Material.Filled.ArrowUpward" Disabled="@(_rule.Conditions.IndexOf(context) == 0)" OnClick="@(() => MoveConditionUp(context))" Size="Size.Small" />
+                        <MudIconButton Icon="@Icons.Material.Filled.ArrowDownward" Disabled="@(_rule.Conditions.IndexOf(context) == _rule.Conditions.Count - 1)" OnClick="@(() => MoveConditionDown(context))" Size="Size.Small" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" OnClick="@(() => OpenConditionDialog(context))" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Variant="Variant.Filled" Color="Color.Error" Size="Size.Small" OnClick="@(() => RemoveCondition(context))" />
+                    </MudTd>
+                </RowTemplate>
+                 <NoRecordsContent>
+                    <MudText>@Localization.NoConditions</MudText>
+                </NoRecordsContent>
+            </MudTable>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton StartIcon="@Icons.Material.Filled.Close" OnClick="@Cancel">@Localization.Cancel</MudButton>
+        <MudButton StartIcon="@Icons.Material.Filled.Check" Color="Color.Primary" OnClick="@Save" Disabled="@(_rule?.Conditions.Any() == false)">
+            @(RuleId == 0 ? Localization.AddButton : Localization.UpdateButton)
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private List<SensorData> _localSensors = new();
+    [CascadingParameter]
+    IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    public int RuleId { get; set; }
+
+    [Parameter]
+    public List<SensorData> AvailableSensors { get; set; } = new();
+
+    private FanControlRule? _rule;
+    private MudForm? _form;
+    private bool _success;
+
+    protected override async Task OnInitializedAsync()
+    {
+        LocalizationService.OnLanguageChanged += StateHasChanged;
+
+        if (RuleId == 0)
+        {
+            _rule = new FanControlRule();
+        }
+        else
+        {
+            _rule = await FanControlService.GetRuleByIdAsync(RuleId);
+        }
+        // Initialize local sensors list, fetch if empty
+        _localSensors = AvailableSensors ?? new List<SensorData>();
+        if (!_localSensors.Any())
+        {
+            _localSensors = await SensorDataService.GetSensorsAsync();
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task Save()
+    {
+        await _form!.Validate();
+        if (!_success || _rule == null)
+        {
+            Snackbar.Add(Localization.FixValidationErrors, Severity.Warning);
+            return;
+        }
+
+        var success = await FanControlService.SaveRuleAsync(_rule);
+        if(success)
+        {
+            Snackbar.Add(Localization.RuleSavedSuccess, Severity.Success);
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        else
+        {
+            Snackbar.Add(Localization.RuleSaveFailed, Severity.Error);
+        }
+    }
+
+    private string GetOperatorDisplayName(TriggerOperator op)
+    {
+        return op switch
+        {
+            TriggerOperator.GreaterThan => Localization.OperatorGreaterThan,
+            TriggerOperator.LessThan => Localization.OperatorLessThan,
+            TriggerOperator.EqualTo => Localization.OperatorEqualTo,
+            _ => op.ToString()
+        };
+    }
+
+    private void RemoveCondition(FanControlCondition condition)
+    {
+        _rule?.Conditions.Remove(condition);
+    }
+    private void MoveConditionUp(FanControlCondition condition)
+    {
+        var list = _rule?.Conditions;
+        if (list == null) return;
+        var index = list.IndexOf(condition);
+        if (index > 0)
+        {
+            list.RemoveAt(index);
+            list.Insert(index - 1, condition);
+        }
+    }
+    private void MoveConditionDown(FanControlCondition condition)
+    {
+        var list = _rule?.Conditions;
+        if (list == null) return;
+        var index = list.IndexOf(condition);
+        if (index >= 0 && index < list.Count - 1)
+        {
+            list.RemoveAt(index);
+            list.Insert(index + 1, condition);
+        }
+    }
+
+    private async Task OpenConditionDialog(FanControlCondition? condition = null)
+    {
+        var isNew = condition == null;
+        var parameters = new DialogParameters
+        {
+            ["ConditionToEdit"] = isNew ? new FanControlCondition() : condition,
+            ["AvailableSensors"] = AvailableSensors
+        };
+        var title = isNew ? Localization.AddConditionTitle : Localization.EditConditionTitle;
+        
+        var dialog = await DialogService.ShowAsync<AddEditFanControlConditionDialog>(title, parameters);
+        var result = await dialog.Result;
+
+        if (result is { Canceled: false, Data: FanControlCondition returnedCondition })
+        {
+            if (isNew)
+            {
+                _rule?.Conditions.Add(returnedCondition);
+            }
+            StateHasChanged();
+        }
+    }
+
+    public void Dispose()
+    {
+        LocalizationService.OnLanguageChanged -= StateHasChanged;
+    }
+} 
+<style>
+    .form-check.form-switch .form-check-input {
+        width: 3.0rem;
+        height: 1.5rem;
+        font-size: 1.15rem;
+        transition: background-position .2s ease-in-out, background-color .3s ease, border-color .3s ease !important;
+    }
+
+    .form-check-input:focus {
+        border-color: #86b7fe !important;
+        outline: 0 !important;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, .25) !important;
+    }
+
+    .form-check.form-switch {
+        padding-left: 3.5rem !important;
+    }
+    .form-check.form-switch .form-check-label {
+        margin-left: 1rem;
+        font-size: 1.15rem;
+        line-height: 1.5rem;
+        position: relative;
+        top: 0.15rem;
+    }
+</style>

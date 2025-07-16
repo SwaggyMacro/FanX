@@ -1,0 +1,159 @@
+@using FanX.Resources
+@inject NotificationService NotificationService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject LocalizationService LocalizationService
+@implements IDisposable
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">@(RuleId == 0 ? Localization.AddRule : Localization.EditRule)</MudText>
+    </TitleContent>
+    <DialogContent>
+        @if (_rule == null)
+        {
+            <MudProgressCircular Indeterminate="true" />
+        }
+        else
+        {
+            <MudForm @ref="_form" @bind-IsValid="@_success" Class="mb-4">
+                <MudTextField @bind-Value="@_rule.Name" Label="@Localization.RuleName" Required="true" />
+                <MudNumericField @bind-Value="@_rule.FrequencyMinutes" Label="@Localization.CooldownMins" Min="0" Required="true" />
+                <MudTextField @bind-Value="@_rule.Template" Label="@Localization.MessageTemplate" Lines="3" />
+                <MudText Typo="Typo.caption" Class="mt-2">@Localization.TemplateVariables</MudText>
+                <div class="form-check form-switch mt-4">
+                    <input class="form-check-input" type="checkbox" role="switch"
+                           checked="@_rule.IsEnabled"
+                           @onchange="(ChangeEventArgs e) => { if (e.Value is bool val) { _rule.IsEnabled = val; StateHasChanged(); } }" />
+                    <label class="form-check-label" style="margin-left:1rem;">@Localization.Enabled</label>
+                </div>
+            </MudForm>
+
+            <MudText Typo="Typo.h6" Class="mt-6 mb-2">@Localization.Conditions</MudText>
+            <MudText Typo="Typo.body2" Class="mb-4">@Localization.ConditionsHelpText</MudText>
+            
+            <MudTable Items="@_rule.Conditions" Dense="true" Hover="true" Striped="true">
+                <ToolBarContent>
+                    <MudText Typo="Typo.h6">@Localization.Conditions</MudText>
+                    <MudSpacer />
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => OpenConditionDialog())">@Localization.AddCondition</MudButton>
+                </ToolBarContent>
+                <HeaderContent>
+                    <MudTh>@Localization.Sensor</MudTh>
+                    <MudTh>@Localization.Operator</MudTh>
+                    <MudTh>@Localization.Threshold</MudTh>
+                    <MudTh>@Localization.Actions</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="@Localization.Sensor">@context.SensorName</MudTd>
+                    <MudTd DataLabel="@Localization.Operator">@GetOperatorDisplayName(context.Operator)</MudTd>
+                    <MudTd DataLabel="@Localization.Threshold">@context.Threshold</MudTd>
+                    <MudTd DataLabel="@Localization.Actions">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" OnClick="@(() => OpenConditionDialog(context))"/>
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Variant="Variant.Filled" Color="Color.Error" Size="Size.Small" OnClick="@(() => RemoveCondition(context))"/>
+                    </MudTd>
+                </RowTemplate>
+                 <NoRecordsContent>
+                    <MudText>@Localization.NoConditions</MudText>
+                </NoRecordsContent>
+            </MudTable>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@Cancel" StartIcon="@Icons.Material.Filled.Close">@Localization.Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="@Save" StartIcon="@Icons.Material.Filled.Check" Disabled="@(_rule?.Conditions.Any() == false)">@(RuleId == 0 ? Localization.AddButton : Localization.UpdateButton)</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    public int RuleId { get; set; }
+
+    private NotificationRule? _rule;
+    private MudForm? _form;
+    private bool _success;
+
+    protected override async Task OnInitializedAsync()
+    {
+        LocalizationService.OnLanguageChanged += StateHasChanged;
+        if (RuleId == 0)
+        {
+            _rule = new NotificationRule();
+        }
+        else
+        {
+            _rule = await NotificationService.GetNotificationRuleByIdAsync(RuleId);
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task Save()
+    {
+        await _form!.Validate();
+        if (!_success || _rule == null)
+        {
+            Snackbar.Add(Localization.FixValidationErrors, Severity.Warning);
+            return;
+        }
+
+        var success = await NotificationService.SaveNotificationRuleAsync(_rule);
+        if(success)
+        {
+            Snackbar.Add(Localization.RuleSavedSuccess, Severity.Success);
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        else
+        {
+            Snackbar.Add(Localization.RuleSaveFailed, Severity.Error);
+        }
+    }
+
+    private string GetOperatorDisplayName(TriggerOperator op)
+    {
+        return op switch
+        {
+            TriggerOperator.GreaterThan => Localization.OperatorGreaterThan,
+            TriggerOperator.LessThan => Localization.OperatorLessThan,
+            TriggerOperator.EqualTo => Localization.OperatorEqualTo,
+            _ => op.ToString()
+        };
+    }
+
+    private void RemoveCondition(NotificationCondition condition)
+    {
+        _rule?.Conditions.Remove(condition);
+    }
+    
+    private async Task OpenConditionDialog(NotificationCondition? condition = null)
+    {
+        var isNew = condition == null;
+        var parameters = new DialogParameters
+        {
+            ["ConditionToEdit"] = isNew ? new NotificationCondition() : condition
+        };
+        var title = isNew ? Localization.AddConditionTitle : Localization.EditConditionTitle;
+        
+        var dialog = await DialogService.ShowAsync<AddEditConditionDialog>(title, parameters);
+        var result = await dialog.Result;
+
+        if (result is { Canceled: false, Data: NotificationCondition returnedCondition })
+        {
+            if (isNew)
+            {
+                _rule?.Conditions.Add(returnedCondition);
+            }
+            // If editing, the object in the list is already updated due to reference tracking.
+            // We just need to re-render.
+            StateHasChanged();
+        }
+    }
+
+    public void Dispose()
+    {
+        LocalizationService.OnLanguageChanged -= StateHasChanged;
+    }
+} 

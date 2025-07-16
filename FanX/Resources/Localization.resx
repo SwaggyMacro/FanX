@@ -1,0 +1,880 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<root>
+    <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+        <xsd:element name="root" msdata:IsDataSet="true">
+            
+        </xsd:element>
+    </xsd:schema>
+    <resheader name="resmimetype">
+        <value>text/microsoft-resx</value>
+    </resheader>
+    <resheader name="version">
+        <value>1.3</value>
+    </resheader>
+    <resheader name="reader">
+        <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <resheader name="writer">
+        <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <data name="AppName" xml:space="preserve">
+    <value>FanX</value>
+    <comment>Application name</comment>
+  </data>
+  
+  <!-- Login Page -->
+  <data name="LoginTitle" xml:space="preserve">
+    <value>User Login</value>
+    <comment>Login page title</comment>
+  </data>
+  <data name="Username" xml:space="preserve">
+    <value>Username</value>
+    <comment>Username field label</comment>
+  </data>
+  <data name="Password" xml:space="preserve">
+    <value>Password</value>
+    <comment>Password field label</comment>
+  </data>
+  <data name="RememberMe" xml:space="preserve">
+    <value>Remember Me</value>
+    <comment>Remember me checkbox label</comment>
+  </data>
+  <data name="LoginButton" xml:space="preserve">
+    <value>Login</value>
+    <comment>Login button text</comment>
+  </data>
+  <data name="LoggingIn" xml:space="preserve">
+    <value>Logging in...</value>
+    <comment>Login button loading text</comment>
+  </data>
+  <data name="NoAccount" xml:space="preserve">
+    <value>Don't have an account? Register now</value>
+    <comment>Link to registration page</comment>
+  </data>
+  <data name="LoginSuccess" xml:space="preserve">
+    <value>Login successful!</value>
+    <comment>Login success message</comment>
+  </data>
+  <data name="LoginError" xml:space="preserve">
+    <value>Invalid username or password</value>
+    <comment>Login error message</comment>
+  </data>
+  
+  <!-- Register Page -->
+  <data name="RegisterTitle" xml:space="preserve">
+    <value>User Registration</value>
+    <comment>Register page title</comment>
+  </data>
+  <data name="Email" xml:space="preserve">
+    <value>Email</value>
+    <comment>Email field label</comment>
+  </data>
+  <data name="ConfirmPassword" xml:space="preserve">
+    <value>Confirm Password</value>
+    <comment>Confirm password field label</comment>
+  </data>
+  <data name="RegisterButton" xml:space="preserve">
+    <value>Register</value>
+    <comment>Register button text</comment>
+  </data>
+  <data name="Registering" xml:space="preserve">
+    <value>Registering...</value>
+    <comment>Register button loading text</comment>
+  </data>
+  <data name="HasAccount" xml:space="preserve">
+    <value>Already have an account? Login now</value>
+    <comment>Link to login page</comment>
+  </data>
+  <data name="RegisterSuccess" xml:space="preserve">
+    <value>Registration successful! Please login</value>
+    <comment>Register success message</comment>
+  </data>
+  <data name="RegisterError" xml:space="preserve">
+    <value>Registration failed: Username or email already exists</value>
+    <comment>Register error message</comment>
+  </data>
+  
+  <!-- Navigation -->
+  <data name="Home" xml:space="preserve">
+    <value>Home</value>
+    <comment>Home navigation link</comment>
+  </data>
+  <data name="Dashboard" xml:space="preserve">
+    <value>Dashboard</value>
+    <comment>Dashboard navigation link</comment>
+  </data>
+  <data name="Profile" xml:space="preserve">
+    <value>Profile</value>
+    <comment>Profile navigation link</comment>
+  </data>
+  <data name="Login" xml:space="preserve">
+    <value>Login</value>
+    <comment>Login navigation link</comment>
+  </data>
+  <data name="Register" xml:space="preserve">
+    <value>Register</value>
+    <comment>Register navigation link</comment>
+  </data>
+  <data name="Logout" xml:space="preserve">
+    <value>Logout</value>
+    <comment>Logout button text</comment>
+  </data>
+  <data name="Admin" xml:space="preserve">
+    <value>Admin</value>
+    <comment>Admin navigation group</comment>
+  </data>
+  <data name="UserManagement" xml:space="preserve">
+    <value>User Management</value>
+    <comment>User management navigation link</comment>
+  </data>
+  <data name="SystemSettings" xml:space="preserve">
+    <value>System Settings</value>
+    <comment>System settings navigation link</comment>
+  </data>
+  <data name="FanControl" xml:space="preserve">
+    <value>Fan Control</value>
+    <comment>Fan Control navigation link</comment>
+  </data>
+  <!-- Home Page -->
+  <data name="WelcomeBack" xml:space="preserve">
+    <value>Welcome back, {0}!</value>
+    <comment>Welcome message with username</comment>
+  </data>
+  <data name="UserInfo" xml:space="preserve">
+    <value>User Information</value>
+    <comment>User info section title</comment>
+  </data>
+  <data name="UserRole" xml:space="preserve">
+    <value>Role</value>
+    <comment>User role label</comment>
+  </data>
+  <data name="NotLoggedIn" xml:space="preserve">
+    <value>You are not logged in. Please login to access more features.</value>
+    <comment>Not logged in message</comment>
+  </data>
+  <data name="WelcomeTitle" xml:space="preserve">
+    <value>Welcome</value>
+    <comment>Welcome section title</comment>
+  </data>
+  <data name="WelcomeDescription" xml:space="preserve">
+    <value>This is a login authentication example application built with Blazor, MudBlazor, SQLite and SqlSugar.</value>
+    <comment>Welcome page description</comment>
+  </data>
+  <data name="LoginNow" xml:space="preserve">
+    <value>Login Now</value>
+    <comment>Login now button</comment>
+  </data>
+  <data name="RegisterAccount" xml:space="preserve">
+    <value>Register Account</value>
+    <comment>Register account button</comment>
+  </data>
+  
+  <!-- Common -->
+  <data name="Loading" xml:space="preserve">
+    <value>Loading...</value>
+    <comment>Loading text</comment>
+  </data>
+  <data name="Error" xml:space="preserve">
+    <value>Error</value>
+    <comment>Error text</comment>
+  </data>
+  <data name="Success" xml:space="preserve">
+    <value>Success</value>
+    <comment>Success text</comment>
+  </data>
+  <data name="Info" xml:space="preserve">
+    <value>Info</value>
+    <comment>Info text</comment>
+  </data>
+  <data name="Warning" xml:space="preserve">
+    <value>Warning</value>
+    <comment>Warning text</comment>
+  </data>
+  
+  <!-- Language -->
+  <data name="Language" xml:space="preserve">
+    <value>Language</value>
+    <comment>Language selection label</comment>
+  </data>
+  <data name="English" xml:space="preserve">
+    <value>English</value>
+    <comment>English language option</comment>
+  </data>
+  <data name="Chinese" xml:space="preserve">
+    <value>中文</value>
+    <comment>Chinese language option</comment>
+  </data>
+  
+  <!-- Not Found Page -->
+  <data name="PageNotFound" xml:space="preserve">
+    <value>Page Not Found</value>
+    <comment>404 page title</comment>
+  </data>
+  <data name="PageNotFoundMessage" xml:space="preserve">
+    <value>Sorry, the page you are looking for does not exist.</value>
+    <comment>404 page message</comment>
+  </data>
+  <data name="GoHome" xml:space="preserve">
+    <value>Go Home</value>
+  </data>
+  <data name="IpmiConfiguration" xml:space="preserve">
+    <value>IPMI Config</value>
+  </data>
+  <data name="IpmiControl" xml:space="preserve">
+    <value>IPMI Control</value>
+  </data>
+  <data name="Debug" xml:space="preserve">
+    <value>Debug</value>
+  </data>
+  <data name="UserAccount" xml:space="preserve">
+    <value>User Account</value>
+  </data>
+  <data name="PowerOn" xml:space="preserve">
+    <value>Power On</value>
+  </data>
+  <data name="RealTimeStatus" xml:space="preserve">
+    <value>Real-Time Status</value>
+  </data>
+  <data name="ProfileDescription" xml:space="preserve">
+    <value>Here you can view and edit your profile.</value>
+    <comment>Description for user profile page</comment>
+  </data>
+  <data name="DebugTools" xml:space="preserve">
+    <value>Debug Tools</value>
+    <comment>Debug page title</comment>
+  </data>
+  <data name="IpmiDiagnostics" xml:space="preserve">
+    <value>IPMI Diagnostics</value>
+    <comment>Debug page subtitle</comment>
+  </data>
+  <data name="GetFullSdrList" xml:space="preserve">
+    <value>Get Full SDR List</value>
+    <comment>Debug page button text</comment>
+  </data>
+  <data name="SdrListOutput" xml:space="preserve">
+    <value>SDR List Output:</value>
+    <comment>Label for SDR list output</comment>
+  </data>
+  <data name="UnknownError" xml:space="preserve">
+    <value>An unknown error occurred.</value>
+    <comment>Fallback error message</comment>
+  </data>
+  <data name="LogViewer" xml:space="preserve">
+    <value>Log Viewer</value>
+    <comment>Debug page section title</comment>
+  </data>
+  <data name="SelectLogFile" xml:space="preserve">
+    <value>Select Log File</value>
+    <comment>Label for log file selector</comment>
+  </data>
+  <data name="ViewLog" xml:space="preserve">
+    <value>View Log</value>
+    <comment>Button text to view log</comment>
+  </data>
+  <data name="DownloadLog" xml:space="preserve">
+    <value>Download Log</value>
+  </data>
+  <data name="Refresh" xml:space="preserve">
+    <value>Refresh</value>
+    <comment>Button text to refresh list</comment>
+  </data>
+  <data name="Role" xml:space="preserve">
+    <value>Role</value>
+  </data>
+  <data name="Active" xml:space="preserve">
+    <value>Active</value>
+  </data>
+  <data name="PromoteToAdmin" xml:space="preserve">
+    <value>Promote to Admin</value>
+  </data>
+  <data name="DemoteToUser" xml:space="preserve">
+    <value>Demote to User</value>
+  </data>
+  <data name="ConfirmDeleteUserTitle" xml:space="preserve">
+    <value>Delete User Confirmation</value>
+  </data>
+  <data name="ConfirmDeleteUserMessage" xml:space="preserve">
+    <value>Are you sure you want to delete this user? This cannot be undone.</value>
+  </data>
+  <data name="DeleteUserSuccess" xml:space="preserve">
+    <value>User deleted successfully.</value>
+  </data>
+  <data name="DeleteUserFailed" xml:space="preserve">
+    <value>Failed to delete user.</value>
+  </data>
+  <data name="UpdateUserSuccess" xml:space="preserve">
+    <value>User updated successfully.</value>
+  </data>
+  <data name="UpdateUserFailed" xml:space="preserve">
+    <value>Failed to update user.</value>
+  </data>
+  <data name="ResetPassword" xml:space="preserve">
+    <value>Reset Password</value>
+  </data>
+  <data name="ResetPasswordSuccess" xml:space="preserve">
+    <value>Password reset successfully.</value>
+  </data>
+  <data name="ResetPasswordFailed" xml:space="preserve">
+    <value>Failed to reset password.</value>
+  </data>
+  <data name="LogDirectoryNotFound" xml:space="preserve">
+    <value>Log directory not found.</value>
+    <comment>Warning when log directory missing</comment>
+  </data>
+  <data name="ErrorLoadingLogFiles" xml:space="preserve">
+    <value>Error loading log files: {0}</value>
+    <comment>Error message when loading files fails</comment>
+  </data>
+  <data name="ErrorReadingLogFile" xml:space="preserve">
+    <value>Error reading log file: {0}</value>
+    <comment>Error message when reading log content fails</comment>
+  </data>
+  <data name="HostnameOrIpAddress" xml:space="preserve">
+    <value>Hostname or IP Address</value>
+    <comment>Label for IPMI host field</comment>
+  </data>
+  <data name="SaveConfiguration" xml:space="preserve">
+    <value>Save Configuration</value>
+    <comment>Save configuration button text</comment>
+  </data>
+  <data name="SaveConfigurationSuccess" xml:space="preserve">
+    <value>Configuration saved successfully!</value>
+    <comment>Save configuration success message</comment>
+  </data>
+  <data name="Temperature" xml:space="preserve">
+    <value>Temperature</value>
+    <comment>Temperature card header</comment>
+  </data>
+  <data name="Power" xml:space="preserve">
+    <value>Power</value>
+    <comment>Power card header</comment>
+  </data>
+  <data name="Fans" xml:space="preserve">
+    <value>Fans</value>
+    <comment>Fans card header</comment>
+  </data>
+  <data name="TemperatureHistory" xml:space="preserve">
+    <value>Temperature History (Last Hour)</value>
+    <comment>Temperature history chart title</comment>
+  </data>
+  <data name="PowerHistory" xml:space="preserve">
+    <value>Power History (Last Hour)</value>
+    <comment>Power history chart title</comment>
+  </data>
+  <data name="FanSpeedHistory" xml:space="preserve">
+    <value>Fan Speed History (Last Hour)</value>
+    <comment>Fan speed history chart title</comment>
+  </data>
+  <data name="FanControlSettings" xml:space="preserve">
+    <value>Fan Control Settings</value>
+    <comment>Fan control page title</comment>
+  </data>
+  <data name="FanControlMode" xml:space="preserve">
+    <value>Fan Control Mode</value>
+    <comment>Fan control selector label</comment>
+  </data>
+  <data name="SelectMode" xml:space="preserve">
+    <value>Select Mode</value>
+    <comment>Selector label for fan control mode</comment>
+  </data>
+  <data name="ManualMode" xml:space="preserve">
+    <value>Manual</value>
+    <comment>Manual mode option</comment>
+  </data>
+  <data name="AutomaticSystemDefault" xml:space="preserve">
+    <value>Automatic (System Default)</value>
+    <comment>Automatic mode option</comment>
+  </data>
+  <data name="SmartRuleBased" xml:space="preserve">
+    <value>Smart (Rule-Based)</value>
+    <comment>Smart mode option</comment>
+  </data>
+  <data name="SmartControlRules" xml:space="preserve">
+    <value>Smart Control Rules</value>
+    <comment>Toolbar title for rules table</comment>
+  </data>
+  <data name="OpenTestDialog" xml:space="preserve">
+    <value>Open Test Dialog</value>
+    <comment>Button to open test dialog</comment>
+  </data>
+  <data name="AddNewRule" xml:space="preserve">
+    <value>Add New Rule</value>
+    <comment>Button text to add a new rule</comment>
+  </data>
+  <data name="Enabled" xml:space="preserve">
+    <value>Enabled</value>
+    <comment>Column header for enabled state</comment>
+  </data>
+  <data name="InletTemp" xml:space="preserve">
+    <value>Inlet Temp</value>
+    <comment>Column header for inlet temperature</comment>
+  </data>
+  <data name="ExhaustTemp" xml:space="preserve">
+    <value>Exhaust Temp</value>
+    <comment>Column header for exhaust temperature</comment>
+  </data>
+  <data name="PowerConsumption" xml:space="preserve">
+    <value>Power Consumption</value>
+    <comment>Column header for power consumption</comment>
+  </data>
+  <data name="GetSensorList" xml:space="preserve">
+    <value>Get Sensor List</value>
+    <comment>IPMI control button text</comment>
+  </data>
+  <data name="GetSdrList" xml:space="preserve">
+    <value>Get SDR List</value>
+    <comment>IPMI control button text</comment>
+  </data>
+  <data name="GetFanSpeed" xml:space="preserve">
+    <value>Get Fan Speed</value>
+    <comment>IPMI control button text</comment>
+  </data>
+  <data name="PowerStatus" xml:space="preserve">
+    <value>Power Status</value>
+    <comment>IPMI control button text</comment>
+  </data>
+  <data name="PowerOff" xml:space="preserve">
+    <value>Power Off</value>
+    <comment>IPMI control button text</comment>
+  </data>
+  <data name="PowerCycle" xml:space="preserve">
+    <value>Power Cycle</value>
+    <comment>IPMI control button text</comment>
+  </data>
+  <data name="ConfirmAction" xml:space="preserve">
+    <value>Confirm Action</value>
+    <comment>Confirmation dialog title</comment>
+  </data>
+  <data name="ConfirmActionMessage" xml:space="preserve">
+    <value>Are you sure you want to perform the action: '{0}'?</value>
+    <comment>Confirmation dialog message with action name</comment>
+  </data>
+  <data name="Confirm" xml:space="preserve">
+    <value>Confirm</value>
+    <comment>Confirm button text in dialogs</comment>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Cancel</value>
+    <comment>Cancel button text in dialogs</comment>
+  </data>
+  <data name="CommandSuccessful" xml:space="preserve">
+    <value>Command successful</value>
+    <comment>Snackbar success message after IPMI command</comment>
+  </data>
+  <data name="CommandFailed" xml:space="preserve">
+    <value>Command failed</value>
+    <comment>Snackbar error message after IPMI command</comment>
+  </data>
+  <data name="OutputLabel" xml:space="preserve">
+    <value>Output:</value>
+    <comment>Label before command output</comment>
+  </data>
+  <data name="FanSpeed" xml:space="preserve">
+    <value>Fan Speed</value>
+    <comment>Column header for fan speed</comment>
+  </data>
+  <data name="RuleAdded" xml:space="preserve">
+    <value>Rule added successfully.</value>
+    <comment>Snackbar message after adding a rule</comment>
+  </data>
+  <data name="RuleUpdated" xml:space="preserve">
+    <value>Rule updated successfully.</value>
+    <comment>Snackbar message after updating a rule</comment>
+  </data>
+  <data name="RuleDeleted" xml:space="preserve">
+    <value>Rule deleted.</value>
+    <comment>Snackbar message after deleting a rule</comment>
+  </data>
+  <data name="RuleAddFailed" xml:space="preserve">
+    <value>Failed to add rule.</value>
+    <comment>Snackbar error message after failing to add a rule</comment>
+  </data>
+  <data name="Disabled" xml:space="preserve">
+    <value>Disabled</value>
+    <comment>Disabled status text</comment>
+  </data>
+  <data name="Rule" xml:space="preserve">
+    <value>Rule</value>
+    <comment>Generic term for a rule</comment>
+  </data>
+  <data name="ConfirmDeletion" xml:space="preserve">
+    <value>Confirm Deletion</value>
+    <comment>Title for delete confirmation dialog</comment>
+  </data>
+  <data name="ConfirmDeleteMessage" xml:space="preserve">
+    <value>Are you sure you want to delete this rule?</value>
+    <comment>Message for delete confirmation dialog</comment>
+  </data>
+  <data name="Delete" xml:space="preserve">
+    <value>Delete</value>
+    <comment>Delete button text</comment>
+  </data>
+  <data name="TestDialogTitle" xml:space="preserve">
+    <value>Testing Dialog</value>
+    <comment>Title for test dialog</comment>
+  </data>
+  <data name="RuleStatusUpdated" xml:space="preserve">
+    <value>Rule status updated.</value>
+    <comment>Snackbar message after toggling rule</comment>
+  </data>
+  <data name="AddRuleTitle" xml:space="preserve">
+    <value>Add Rule</value>
+    <comment>Title for add rule dialog</comment>
+  </data>
+  <data name="AddButton" xml:space="preserve">
+    <value>Add</value>
+    <comment>Submit button text for add dialog</comment>
+  </data>
+  <data name="UpdateButton" xml:space="preserve">
+    <value>Update</value>
+    <comment>Submit button text for edit dialog</comment>
+  </data>
+  <data name="RuleEnabled" xml:space="preserve">
+    <value>Rule Enabled</value>
+    <comment>Label for rule enabled switch</comment>
+  </data>
+  <data name="InletTempThresholdLabel" xml:space="preserve">
+    <value>Inlet Temp (°C)</value>
+    <comment>Label for inlet temp threshold</comment>
+  </data>
+  <data name="ExhaustTempThresholdLabel" xml:space="preserve">
+    <value>Exhaust Temp (°C)</value>
+    <comment>Label for exhaust temp threshold</comment>
+  </data>
+  <data name="Cpu1Temp" xml:space="preserve">
+    <value>CPU1 Temp</value>
+    <comment>Column header for CPU1 temperature</comment>
+  </data>
+  <data name="Cpu2Temp" xml:space="preserve">
+    <value>CPU2 Temp</value>
+    <comment>Column header for CPU2 temperature</comment>
+  </data>
+  <data name="Cpu1TempThresholdLabel" xml:space="preserve">
+    <value>CPU1 Temp (°C)</value>
+    <comment>Label for CPU1 temp threshold</comment>
+  </data>
+  <data name="Cpu2TempThresholdLabel" xml:space="preserve">
+    <value>CPU2 Temp (°C)</value>
+    <comment>Label for CPU2 temp threshold</comment>
+  </data>
+  <data name="PwrConsumptionThresholdLabel" xml:space="preserve">
+    <value>Power Consumption (W)</value>
+    <comment>Label for power consumption threshold</comment>
+  </data>
+  <data name="FanSpeedPercentLabel" xml:space="preserve">
+    <value>Fan Speed (%)</value>
+    <comment>Label for fan speed threshold</comment>
+  </data>
+  <data name="TargetFanSpeedLabel" xml:space="preserve">
+    <value>Target Fan Speed (%)</value>
+    <comment>Label for target fan speed threshold</comment>
+  </data>
+  <data name="Notes" xml:space="preserve">
+    <value>Notes</value>
+    <comment>Label for notes field</comment>
+  </data>
+  <data name="TargetSpeedRequiredError" xml:space="preserve">
+    <value>Target speed is required!</value>
+    <comment>Validation message for target speed</comment>
+  </data>
+  <data name="TestDialogContent" xml:space="preserve">
+    <value>If you can close this, the basic dialog mechanism is working.</value>
+    <comment>Content for test dialog</comment>
+  </data>
+  <data name="Close" xml:space="preserve">
+    <value>Close</value>
+    <comment>Close button text</comment>
+  </data>
+  
+  <!-- Notifications Page -->
+  <data name="Notifications" xml:space="preserve">
+    <value>Notifications</value>
+  </data>
+  <data name="NotificationSettings" xml:space="preserve">
+    <value>Notification Settings</value>
+  </data>
+  <data name="EnableNotifications" xml:space="preserve">
+    <value>Enable Notifications</value>
+  </data>
+  <data name="WebhookSettings" xml:space="preserve">
+    <value>Webhook Settings</value>
+  </data>
+  <data name="EnableWebhook" xml:space="preserve">
+    <value>Enable Webhook</value>
+  </data>
+  <data name="WebhookURL" xml:space="preserve">
+    <value>Webhook URL</value>
+  </data>
+  <data name="TelegramSettings" xml:space="preserve">
+    <value>Telegram Settings</value>
+  </data>
+  <data name="EnableTelegramBot" xml:space="preserve">
+    <value>Enable Telegram Bot</value>
+  </data>
+  <data name="TelegramBotToken" xml:space="preserve">
+    <value>Telegram Bot Token</value>
+  </data>
+  <data name="TelegramChatID" xml:space="preserve">
+    <value>Telegram Chat ID</value>
+  </data>
+  <data name="SaveSettings" xml:space="preserve">
+    <value>Save Settings</value>
+  </data>
+  <data name="SettingsSavedSuccess" xml:space="preserve">
+    <value>Settings saved successfully!</value>
+  </data>
+  <data name="SettingsSaveFailed" xml:space="preserve">
+    <value>Failed to save settings.</value>
+  </data>
+  <data name="LogRetentionDays" xml:space="preserve">
+    <value>Log Retention (Days)</value>
+  </data>
+  <data name="SensorDataRetentionDays" xml:space="preserve">
+    <value>Sensor Data Retention (Days)</value>
+  </data>
+  <data name="AllowRegistration" xml:space="preserve">
+    <value>Allow Registration</value>
+  </data>
+  <data name="ClearSensorData" xml:space="preserve">
+    <value>Clear Sensor Data</value>
+  </data>
+  <data name="NotificationRules" xml:space="preserve">
+    <value>Notification Rules</value>
+  </data>
+  <data name="Rules" xml:space="preserve">
+    <value>Rules</value>
+  </data>
+  <data name="Conditions" xml:space="preserve">
+    <value>Conditions</value>
+  </data>
+  <data name="CooldownMins" xml:space="preserve">
+    <value>Cooldown (Mins)</value>
+  </data>
+  <data name="Actions" xml:space="preserve">
+    <value>Actions</value>
+  </data>
+  <data name="DeleteRuleConfirmTitle" xml:space="preserve">
+    <value>Delete Confirmation</value>
+  </data>
+  <data name="DeleteRuleConfirmMessage" xml:space="preserve">
+    <value>Do you really want to delete this rule? This process cannot be undone.</value>
+  </data>
+  <data name="RuleDeleteFailed" xml:space="preserve">
+    <value>Failed to delete rule.</value>
+  </data>
+  <data name="AddRule" xml:space="preserve">
+    <value>Add Rule</value>
+  </data>
+  
+  <!-- Add/Edit Rule Dialog -->
+  <data name="RuleName" xml:space="preserve">
+    <value>Rule Name</value>
+  </data>
+  <data name="MessageTemplate" xml:space="preserve">
+    <value>Message Template</value>
+  </data>
+  <data name="TemplateVariables" xml:space="preserve">
+    <value>Use variables: {RuleName}, {ConditionsSummary}</value>
+  </data>
+  <data name="ConditionsHelpText" xml:space="preserve">
+    <value>All conditions must be met for the rule to trigger.</value>
+  </data>
+  <data name="AddCondition" xml:space="preserve">
+    <value>Add Condition</value>
+  </data>
+  <data name="Sensor" xml:space="preserve">
+    <value>Sensor</value>
+  </data>
+  <data name="Operator" xml:space="preserve">
+    <value>Operator</value>
+  </data>
+  <data name="OperatorEqualTo" xml:space="preserve">
+    <value>Equal To</value>
+  </data>
+  <data name="OperatorGreaterThan" xml:space="preserve">
+    <value>Greater Than</value>
+  </data>
+  <data name="OperatorLessThan" xml:space="preserve">
+    <value>Less Than</value>
+  </data>
+  <data name="Threshold" xml:space="preserve">
+    <value>Threshold</value>
+  </data>
+  <data name="NoConditions" xml:space="preserve">
+    <value>No conditions added yet. Add at least one condition to make the rule active.</value>
+  </data>
+  <data name="FixValidationErrors" xml:space="preserve">
+    <value>Please fix validation errors.</value>
+  </data>
+  <data name="RuleSaveFailed" xml:space="preserve">
+    <value>Failed to save the rule.</value>
+  </data>
+  <data name="RuleSavedSuccess" xml:space="preserve">
+    <value>Rule saved successfully!</value>
+  </data>
+  
+  <!-- Add Condition Dialog -->
+  <data name="AddConditionTitle" xml:space="preserve">
+    <value>Add Condition</value>
+  </data>
+  <data name="TestButton" xml:space="preserve">
+    <value>Test</value>
+  </data>
+  <data name="TestFailedMessage" xml:space="preserve">
+    <value>Failed to send test notification. Please check your settings and the application logs.</value>
+  </data>
+  <data name="TestMessageBody" xml:space="preserve">
+    <value>This is a test notification from FanX.</value>
+  </data>
+  <data name="TestMessageTitle" xml:space="preserve">
+    <value>Test Notification</value>
+  </data>
+  <data name="TestSuccessMessage" xml:space="preserve">
+    <value>Test notification sent successfully!</value>
+  </data>
+  <data name="WeComBotKey" xml:space="preserve">
+    <value>WeCom Bot Key</value>
+  </data>
+  <data name="WeComBotSettings" xml:space="preserve">
+    <value>WeCom Bot Settings</value>
+  </data>
+  <data name="EnableWeComBot" xml:space="preserve">
+    <value>Enable WeCom Bot</value>
+  </data>
+  <data name="WebhookRequestMethod" xml:space="preserve">
+    <value>Request Method</value>
+  </data>
+  <data name="WebhookBodyTemplate" xml:space="preserve">
+    <value>Request Body Template</value>
+  </data>
+  <data name="WebhookTemplateHelpText" xml:space="preserve">
+    <value>Use {Title} and {Message} as placeholders. The content will be sent as JSON.</value>
+  </data>
+  <data name="EditRule" xml:space="preserve">
+    <value>Edit rule</value>
+  </data>
+  <data name="EditConditionTitle" xml:space="preserve">
+    <value>Edit condition</value>
+  </data>
+  <data name="System" xml:space="preserve">
+    <value>System</value>
+  </data>
+  <data name="TargetFans" xml:space="preserve">
+    <value>Target Fans</value>
+  </data>
+  <data name="TargetFansRequiredError" xml:space="preserve">
+    <value>You must select at least one target fan.</value>
+  </data>
+  <data name="TargetFanSpeed" xml:space="preserve">
+    <value>Target Fan Speed</value>
+  </data>
+  <data name="TargetFanSpeedRequiredError" xml:space="preserve">
+    <value>Target fan speed required.</value>
+  </data>
+  <data name="FanDebug" xml:space="preserve">
+    <value>Fan Debug</value>
+  </data>
+  <data name="EnableManualControl" xml:space="preserve">
+    <value>Enable Manual Control</value>
+  </data>
+  <data name="EnableAutoControl" xml:space="preserve">
+    <value>Enable Auto Control</value>
+  </data>
+  <data name="ControlAllFan" xml:space="preserve">
+    <value>Control All Fan</value>
+  </data>
+  <data name="Set" xml:space="preserve">
+    <value>Set</value>
+  </data>
+  <data name="ControlSingleFan" xml:space="preserve">
+    <value>Control Single Fan</value>
+  </data>
+  <data name="ChooseFan" xml:space="preserve">
+    <value>Choose Fan</value>
+  </data>
+  <data name="InvalidChosenFan" xml:space="preserve">
+    <value>Invalid Chosen Fan</value>
+  </data>
+  <data name="FanSpeedSetTo" xml:space="preserve">
+    <value>Set {0} speed to {1}%</value>
+  </data>
+  <data name="SetAllFansSpeedTo" xml:space="preserve">
+    <value>Set all fans speed to {0}%</value>
+  </data>
+  <data name="PleaseChooseAFan" xml:space="preserve">
+    <value>Please choose a fan</value>
+  </data>
+  <data name="SetToAutoControlFanModeSucceed" xml:space="preserve">
+    <value>Set to auto control fan mode succeed.</value>
+  </data>
+  <data name="SetToManualControlFanModeSucceed" xml:space="preserve">
+    <value>Set to manual control fan mode succeed.</value>
+  </data>
+  <data name="FanSensorNotFound" xml:space="preserve">
+    <value>Fan sensor not found</value>
+  </data>
+  <data name="UnknownErrorWhenGetSensorData" xml:space="preserve">
+    <value>An unknown error occurred when getting sensor data.</value>
+  </data>
+  <data name="FailedToLoadSensorList" xml:space="preserve">
+    <value>Failed to load sensor list</value>
+  </data>
+  <data name="ChangePasswordFailed" xml:space="preserve">
+    <value>Unable to change password.</value>
+  </data>
+  <data name="ChangePassword" xml:space="preserve">
+    <value>Change Password</value>
+  </data>
+  <data name="CurrentPassword" xml:space="preserve">
+    <value>Current Password</value>
+  </data>
+  <data name="NewPassword" xml:space="preserve">
+    <value>New Password</value>
+  </data>
+  <data name="ConfirmPasswordMismatch" xml:space="preserve">
+    <value>New password and confirmation do not match.</value>
+  </data>
+  <data name="ClearLogs" xml:space="preserve">
+    <value>Clear Logs</value>
+  </data>
+  <data name="RegistrationDisabled" xml:space="preserve">
+    <value>Registration is currently disabled.</value>
+  </data>
+  <data name="AddUser" xml:space="preserve">
+    <value>Add User</value>
+  </data>
+  <data name="AddUserFailed" xml:space="preserve">
+    <value>Add user failed.</value>
+  </data>
+  <data name="AddUserSuccess" xml:space="preserve">
+    <value>Add user success.</value>
+  </data>
+  <data name="EmailSettings" xml:space="preserve">
+    <value>Email Settings</value>
+  </data>
+  <data name="EnableEmailNotifications" xml:space="preserve">
+    <value>Enable Email Notifications</value>
+  </data>
+  <data name="EmailRecipients" xml:space="preserve">
+    <value>Email Recipients</value>
+  </data>
+  <data name="SmtpHost" xml:space="preserve">
+    <value>Smtp Host</value>
+  </data>
+  <data name="SmtpPort" xml:space="preserve">
+    <value>Smtp Port</value>
+  </data>
+  <data name="SmtpUser" xml:space="preserve">
+    <value>Smtp User</value>
+  </data>
+  <data name="SmtpPassword" xml:space="preserve">
+    <value>Smtp Password</value>
+  </data>
+  <data name="EnableSsl" xml:space="preserve">
+    <value>Enable Ssl</value>
+  </data>
+  <data name="RedirectingToLogin" xml:space="preserve">
+    <value>Redirecting to login...</value>
+  </data>
+</root>

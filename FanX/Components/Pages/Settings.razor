@@ -1,0 +1,160 @@
+@page "/settings"
+@attribute [Authorize(Roles = "Admin")]
+@using System.IO
+@using FanX.Resources
+@inject DatabaseService DatabaseService
+@inject ISnackbar Snackbar
+@inject LocalizationService LocalizationService
+
+<PageTitle>@Localization.SystemSettings</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-6">
+    <MudPaper Class="pa-4 mb-4">
+        <MudText Typo="Typo.h5">@Localization.SystemSettings</MudText>
+        <MudForm>
+            <div class="form-check form-switch mb-4">
+                <input class="form-check-input" type="checkbox" role="switch"
+                       checked="@_allowRegistration"
+                       @onchange="e => { if (e.Value is bool val) _allowRegistration = val; }" />
+                <label class="form-check-label ms-2">@Localization.AllowRegistration</label>
+            </div>
+            <MudGrid Class="mb-4">
+                <MudItem xs="12" sm="6">
+                    <MudNumericField T="int" Label="@Localization.LogRetentionDays" @bind-Value="_logRetentionDays" Min="0" Class="mb-4" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudNumericField T="int" Label="@Localization.SensorDataRetentionDays" @bind-Value="_sensorDataRetentionDays" Min="0" Class="mb-4" />
+                </MudItem>
+            </MudGrid>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@SaveSettings" StartIcon="@Icons.Material.Filled.Save">
+                @Localization.SaveSettings
+            </MudButton>
+        </MudForm>
+    </MudPaper>
+    <MudPaper Class="pa-4 mb-4">
+        <MudText Typo="Typo.h6">@Localization.ClearLogs</MudText>
+        <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="@ClearLogs" StartIcon="@Icons.Material.Filled.DeleteForever">
+            @Localization.ClearLogs
+        </MudButton>
+    </MudPaper>
+    <MudPaper Class="pa-4 mb-4">
+        <MudText Typo="Typo.h6">@Localization.ClearSensorData</MudText>
+        <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="@ClearSensorData" StartIcon="@Icons.Material.Filled.DeleteSweep">
+            @Localization.ClearSensorData
+        </MudButton>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private bool _allowRegistration;
+    private int _logRetentionDays;
+    private int _sensorDataRetentionDays;
+    protected override async Task OnInitializedAsync()
+    {
+        LocalizationService.OnLanguageChanged += StateHasChanged;
+        var settings = await DatabaseService.Db.Queryable<AppSetting>().ToListAsync();
+        if (settings.Any(s => s.Key == "AllowRegistration"))
+        {
+            _allowRegistration = bool.TryParse(settings.First(s => s.Key == "AllowRegistration").Value, out var v) && v;
+        }
+        // load retention settings for days only
+        if (settings.Any(s => s.Key == "LogRetentionDays"))
+            _logRetentionDays = int.TryParse(settings.First(s => s.Key == "LogRetentionDays").Value, out var d1) ? d1 : 0;
+        if (settings.Any(s => s.Key == "SensorDataRetentionDays"))
+            _sensorDataRetentionDays = int.TryParse(settings.First(s => s.Key == "SensorDataRetentionDays").Value, out var d3) ? d3 : 0;
+    }
+
+    private async Task SaveSettings()
+    {
+        try
+        {
+            var exists = await DatabaseService.Db.Queryable<AppSetting>().AnyAsync(s => s.Key == "AllowRegistration");
+            if (exists)
+            {
+                var setting = await DatabaseService.Db.Queryable<AppSetting>().Where(s => s.Key == "AllowRegistration").FirstAsync();
+                setting.Value = _allowRegistration.ToString().ToLower();
+                await DatabaseService.Db.Updateable(setting).ExecuteCommandAsync();
+            }
+            else
+            {
+                await DatabaseService.Db.Insertable(new AppSetting { Key = "AllowRegistration", Value = _allowRegistration.ToString().ToLower() }).ExecuteCommandAsync();
+            }
+            // upsert retention settings
+            async Task Upsert(string key, string value)
+            {
+                if (await DatabaseService.Db.Queryable<AppSetting>().AnyAsync(s => s.Key == key))
+                {
+                    var setting = await DatabaseService.Db.Queryable<AppSetting>().Where(s => s.Key == key).FirstAsync();
+                    setting.Value = value;
+                    await DatabaseService.Db.Updateable(setting).ExecuteCommandAsync();
+                }
+                else
+                {
+                    await DatabaseService.Db.Insertable(new AppSetting { Key = key, Value = value }).ExecuteCommandAsync();
+                }
+            }
+            await Upsert("LogRetentionDays", _logRetentionDays.ToString());
+            await Upsert("SensorDataRetentionDays", _sensorDataRetentionDays.ToString());
+            Snackbar.Add(Localization.SettingsSavedSuccess, Severity.Success);
+        }
+        catch (Exception)
+        {
+            Snackbar.Add(Localization.SettingsSaveFailed, Severity.Error);
+        }
+    }
+
+    private void ClearLogs()
+    {
+        try
+        {
+            var logDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs");
+            if (Directory.Exists(logDir))
+            {
+                Directory.Delete(logDir, true);
+                Directory.CreateDirectory(logDir);
+            }
+            Snackbar.Add(Localization.ClearLogs + " " + "successfully.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"{Localization.Error}: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task ClearSensorData()
+    {
+        try
+        {
+            await DatabaseService.Db.Deleteable<SensorData>().ExecuteCommandAsync();
+            Snackbar.Add(Localization.ClearSensorData + " " + "successfully.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"{Localization.Error}: {ex.Message}", Severity.Error);
+        }
+    }
+} 
+<style>
+    .form-check.form-switch .form-check-input {
+        width: 3.0rem;
+        height: 1.5rem;
+        font-size: 1.15rem;
+        transition: background-position .2s ease-in-out, background-color .3s ease, border-color .3s ease !important;
+    }
+
+    .form-check-input:focus {
+        border-color: #86b7fe !important;
+        outline: 0 !important;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, .25) !important;
+    }
+    .form-check.form-switch {
+        padding-left: 3.5rem !important;
+    }
+    .form-check.form-switch .form-check-label {
+        margin-left: 1rem;
+        font-size: 1.15rem;
+        line-height: 1.5rem;
+        position: relative;
+        top: 0.15rem;
+    }
+</style> 

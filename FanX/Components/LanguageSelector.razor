@@ -1,0 +1,29 @@
+@inject LocalizationService LocalizationService
+
+<MudMenu Icon="@Icons.Material.Filled.Language" Color="Color.Inherit" Variant="Variant.Text">
+    <ChildContent>
+        <MudMenuItem OnClick="@(() => SetLanguage("en"))" Icon="@Icons.Material.Filled.Language">
+            <MudText Typo="Typo.body2">English</MudText>
+        </MudMenuItem>
+        <MudMenuItem OnClick="@(() => SetLanguage("zh"))" Icon="@Icons.Material.Filled.Language">
+            <MudText Typo="Typo.body2">中文</MudText>
+        </MudMenuItem>
+    </ChildContent>
+</MudMenu>
+
+@code {
+    protected override void OnInitialized()
+    {
+        LocalizationService.OnLanguageChanged += StateHasChanged;
+    }
+
+    private void SetLanguage(string cultureName)
+    {
+        LocalizationService.SetLanguage(cultureName);
+    }
+
+    public void Dispose()
+    {
+        LocalizationService.OnLanguageChanged -= StateHasChanged;
+    }
+}

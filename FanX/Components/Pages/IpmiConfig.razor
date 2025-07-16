@@ -1,0 +1,72 @@
+@page "/ipmi-config"
+@attribute [Authorize(Roles = "Admin")]
+@using FanX.Resources
+@inject IpmiConfigService IpmiConfigService
+@inject ISnackbar Snackbar
+@inject LocalizationService LocalizationService
+@inject SensorDataService SensorDataService
+@implements IDisposable
+
+<PageTitle>@Localization.IpmiConfiguration</PageTitle>
+<MudCard>
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudText Typo="Typo.h6">@Localization.IpmiConfiguration</MudText>
+        </CardHeaderContent>
+    </MudCardHeader>
+    <MudCardContent>
+        <EditForm Model="@_config" OnValidSubmit="HandleValidSubmit">
+            <DataAnnotationsValidator />
+            <MudGrid>
+                <MudItem xs="12">
+                    <MudTextField Label="@Localization.HostnameOrIpAddress" @bind-Value="_config.Host" For="@(() => _config.Host)" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField Label="@Localization.Username" @bind-Value="_config.Username" For="@(() => _config.Username)" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField Label="@Localization.Password" @bind-Value="_config.Password" For="@(() => _config.Password)" InputType="InputType.Password" />
+                </MudItem>
+            </MudGrid>
+            <MudCardActions>
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto" StartIcon="@Icons.Material.Filled.Save">@Localization.SaveConfiguration</MudButton>
+            </MudCardActions>
+        </EditForm>
+    </MudCardContent>
+</MudCard>
+
+@code {
+    protected override void OnInitialized()
+    {
+        LocalizationService.OnLanguageChanged += StateHasChanged;
+    }
+    public void Dispose()
+    {
+        LocalizationService.OnLanguageChanged -= StateHasChanged;
+    }
+    private FanX.Models.IpmiConfig _config = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _config = await IpmiConfigService.GetConfigAsync();
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        await IpmiConfigService.SaveConfigAsync(_config);
+        // Clear sensor cache and notify success immediately
+        SensorDataService.ClearCache();
+        Snackbar.Add(Localization.SaveConfigurationSuccess, Severity.Success);
+        // Preload sensors in background; show error if loading fails
+        _ = PreloadSensorsBackground();
+    }
+
+    private async Task PreloadSensorsBackground()
+    {
+        var sensors = await SensorDataService.GetSensorsAsync();
+        if (!sensors.Any())
+        {
+            Snackbar.Add(Localization.FailedToLoadSensorList, Severity.Error);
+        }
+    }
+}

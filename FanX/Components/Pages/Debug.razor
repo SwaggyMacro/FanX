@@ -1,0 +1,298 @@
+@page "/debug"
+@attribute [Authorize(Roles = "Admin")]
+@using System.IO
+@inject ISnackbar Snackbar
+@inject IpmiService IpmiService
+@using FanX.Resources
+@inject LocalizationService LocalizationService
+@implements IDisposable
+
+@inject NavigationManager Navigation
+
+<PageTitle>@Localization.DebugTools</PageTitle>
+
+<MudText Typo="Typo.h5" GutterBottom="true">@Localization.DebugTools</MudText>
+
+<MudPaper Class="pa-4 mb-4">
+    <MudText Typo="Typo.h6" GutterBottom="true">@Localization.IpmiDiagnostics</MudText>
+    <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.List" OnClick="@GetFullSdrList" Disabled="_isIpmiLoading" Color="Color.Secondary">@Localization.GetFullSdrList</MudButton>
+
+    @if (_isIpmiLoading)
+    {
+        <MudProgressLinear Color="Color.Secondary" Indeterminate="true" Class="my-4"/>
+    }
+
+    @if (!string.IsNullOrEmpty(_ipmiOutput))
+    {
+        <MudPaper Elevation="3" Class="pa-4 mt-4" Style="max-height: 60vh; overflow-y: auto;">
+            <MudText Typo="Typo.h6" GutterBottom="true">@Localization.SdrListOutput</MudText>
+            <pre>@_ipmiOutput</pre>
+        </MudPaper>
+    }
+    
+    @if (!string.IsNullOrEmpty(_ipmiError))
+    {
+        <MudAlert Severity="Severity.Error" Class="mt-4">@_ipmiError</MudAlert>
+    }
+</MudPaper>
+
+<MudPaper Class="pa-4 mb-4">
+    <MudText Typo="Typo.h6" GutterBottom="true">@Localization.FanDebug</MudText>
+
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="4" Class="mb-4">
+        <MudButton Variant="Variant.Filled" OnClick="@SetManualMode" Disabled="_isIpmiLoading" Color="Color.Warning">@Localization.EnableManualControl</MudButton>
+        <MudButton Variant="Variant.Filled" OnClick="@SetAutoMode" Disabled="_isIpmiLoading">@Localization.EnableAutoControl</MudButton>
+    </MudStack>
+
+    <MudText Typo="Typo.body1" Class="mb-2">@Localization.ControlAllFan</MudText>
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="4" Class="mb-4">
+        <MudSlider @bind-Value="_fanSpeedAll" Min="0" Max="100" Step="1" Class="flex-grow-1">@_fanSpeedAll %</MudSlider>
+        <MudButton Variant="Variant.Filled" OnClick="@SetAllFans" Disabled="_isIpmiLoading">@Localization.Set</MudButton>
+    </MudStack>
+
+    <MudText Typo="Typo.body1" Class="mb-2">@Localization.ControlSingleFan</MudText>
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="4">
+        <MudSelect T="string" Label="@Localization.ChooseFan" @bind-Value="_selectedFanId" AnchorOrigin="Origin.BottomCenter" Class="flex-grow-1">
+            @foreach (var fan in _fans)
+            {
+                <MudSelectItem Value="@fan.SensorId">@fan.SensorName (@fan.SensorId)</MudSelectItem>
+            }
+        </MudSelect>
+        <MudSlider @bind-Value="_fanSpeedIndividual" Min="0" Max="100" Step="1" Class="flex-grow-1">@_fanSpeedIndividual %</MudSlider>
+        <MudButton Variant="Variant.Filled" OnClick="@SetOneFan" Disabled="_isIpmiLoading || string.IsNullOrEmpty(_selectedFanId)">@Localization.Set</MudButton>
+    </MudStack>
+</MudPaper>
+
+
+<MudText Typo="Typo.h5" GutterBottom="true">@Localization.LogViewer</MudText>
+
+<MudPaper Class="pa-4">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="4" Class="mb-4">
+        <MudSelect T="string" Label="@Localization.SelectLogFile" @bind-Value="_selectedLogFile" AnchorOrigin="Origin.BottomLeft" TransformOrigin="Origin.TopLeft">
+            @foreach (var file in _logFiles)
+            {
+                <MudSelectItem Value="@file">@Path.GetFileName(file)</MudSelectItem>
+            }
+        </MudSelect>
+        <MudButton Variant="Variant.Filled" OnClick="@DownloadLog" StartIcon="@Icons.Material.Filled.Download" Disabled="string.IsNullOrEmpty(_selectedLogFile)" Color="Color.Primary">@Localization.DownloadLog</MudButton>
+        <MudButton Variant="Variant.Outlined" OnClick="@RefreshLogFiles" StartIcon="@Icons.Material.Filled.Refresh">@Localization.Refresh</MudButton>
+    </MudStack>
+
+    @if (_isLoading)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-4" />
+    }
+    
+    @if (!string.IsNullOrEmpty(_logContent))
+    {
+        <MudPaper Elevation="3" Class="pa-4 mt-4" Style="max-height: 60vh; overflow-y: auto;">
+            <pre>@_logContent</pre>
+        </MudPaper>
+    }
+</MudPaper>
+
+@code {
+    private bool _isLoading;
+    private List<string> _logFiles = new();
+    private string? _selectedLogFile;
+    private string? _logContent;
+    private readonly string _logDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs");
+
+    private bool _isIpmiLoading;
+    private string? _ipmiOutput;
+    private string? _ipmiError;
+
+    private int _fanSpeedAll = 50;
+    private int _fanSpeedIndividual = 50;
+    private string? _selectedFanId;
+    private List<SensorData> _fans = new();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        RefreshLogFiles();
+        LocalizationService.OnLanguageChanged += StateHasChanged;
+        await LoadFanList();
+    }
+
+    public void Dispose()
+    {
+        LocalizationService.OnLanguageChanged -= StateHasChanged;
+    }
+
+    private async Task GetFullSdrList()
+    {
+        _isIpmiLoading = true;
+        _ipmiOutput = null;
+        _ipmiError = null;
+        
+        var (success, output, error) = await IpmiService.GetSdrListAsync();
+        if (success)
+        {
+            _ipmiOutput = output;
+        }
+        else
+        {
+            _ipmiError = string.IsNullOrWhiteSpace(error) ? Localization.UnknownError : error;
+        }
+        
+        _isIpmiLoading = false;
+    }
+
+    private async Task LoadFanList()
+    {
+        _isIpmiLoading = true;
+        var (success, output, error) = await IpmiService.GetSdrListAsync();
+        if (success)
+        {
+            _fans = ParseSdrForFans(output).ToList();
+            if (!_fans.Any())
+            {
+                Snackbar.Add(Localization.FanSensorNotFound, Severity.Warning);
+            }
+        }
+        else
+        {
+            _ipmiError = string.IsNullOrWhiteSpace(error) ? Localization.UnknownErrorWhenGetSensorData : error;
+            Snackbar.Add(_ipmiError, Severity.Error);
+        }
+        _isIpmiLoading = false;
+        StateHasChanged();
+    }
+    
+    private IEnumerable<SensorData> ParseSdrForFans(string output)
+    {
+        if (string.IsNullOrWhiteSpace(output)) yield break;
+
+        var lines = output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+        var fanIndex = 0;
+
+        foreach (var line in lines)
+        {
+            var parts = line.Split('|');
+            if (parts.Length < 2) continue;
+            
+            var name = parts[0].Trim();
+
+            if ((name.Contains("Fan", StringComparison.OrdinalIgnoreCase) || name.Contains("FAN", StringComparison.OrdinalIgnoreCase))
+                && !name.Contains("Redundancy", StringComparison.OrdinalIgnoreCase))
+            {
+                // The command requires the fan *index*, not its Sensor ID from the SDR list.
+                var fanHexId = $"0x{fanIndex:x2}";
+                yield return new SensorData
+                {
+                    SensorName = name,
+                    SensorId = fanHexId, // Use the sequential index for the control command
+                    SensorType = "Fan"
+                };
+                fanIndex++;
+            }
+        }
+    }
+
+    private async Task SetManualMode()
+    {
+        var (success, _, error) = await IpmiService.SetManualFanControlAsync();
+        if (success)
+        {
+            Snackbar.Add(Localization.SetToManualControlFanModeSucceed, Severity.Success);
+        }
+        else
+        {
+            Snackbar.Add($"{Localization.Error}: {error}", Severity.Error);
+        }
+    }
+
+    private async Task SetAutoMode()
+    {
+        var (success, _, error) = await IpmiService.SetAutomaticFanControlAsync();
+        if (success)
+        {
+            Snackbar.Add(Localization.SetToAutoControlFanModeSucceed, Severity.Success);
+        }
+        else
+        {
+            Snackbar.Add($"{Localization.Error}: {error}", Severity.Error);
+        }
+    }
+
+    private async Task SetAllFans()
+    {
+        var (success, _, error) = await IpmiService.SetAllFansSpeedAsync(_fanSpeedAll);
+        if (success)
+        {
+            Snackbar.Add(string.Format(Localization.SetAllFansSpeedTo, _fanSpeedAll), Severity.Success);
+        }
+        else
+        {
+            Snackbar.Add($"{Localization.Error}: {error}", Severity.Error);
+        }
+    }
+
+    private async Task SetOneFan()
+    {
+        if (string.IsNullOrEmpty(_selectedFanId))
+        {
+            Snackbar.Add(Localization.PleaseChooseAFan, Severity.Warning);
+            return;
+        }
+
+        var fan = _fans.FirstOrDefault(f => f.SensorId == _selectedFanId);
+        if (fan == null)
+        {
+            Snackbar.Add(Localization.InvalidChosenFan, Severity.Error);
+            return;
+        }
+
+        var (success, _, error) = await IpmiService.SetIndividualFanSpeedAsync(_selectedFanId, _fanSpeedIndividual);
+        if (success)
+        {
+            Snackbar.Add(string.Format(Localization.FanSpeedSetTo, fan.SensorName, _fanSpeedIndividual), Severity.Success);
+        }
+        else
+        {
+            Snackbar.Add($"{Localization.Error}: {error}", Severity.Error);
+        }
+    }
+
+    private void RefreshLogFiles()
+    {
+        _isLoading = true;
+        try
+        {
+            if (Directory.Exists(_logDirectory))
+            {
+                _logFiles = Directory.GetFiles(_logDirectory, "*.log", SearchOption.AllDirectories)
+                                     .OrderByDescending(f => f)
+                                     .ToList();
+            }
+            else
+            {
+                Snackbar.Add(Localization.LogDirectoryNotFound, Severity.Warning);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(string.Format(Localization.ErrorLoadingLogFiles, ex.Message), Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private void DownloadLog()
+    {
+        if (string.IsNullOrEmpty(_selectedLogFile)) return;
+        var logsDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs");
+        // Get relative path segments
+        var relative = Path.GetRelativePath(logsDir, _selectedLogFile);
+        var segments = relative.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        // Escape each segment, then join with '/'
+        var escapedSegments = segments.Select(s => Uri.EscapeDataString(s));
+        var path = string.Join('/', escapedSegments);
+        var url = $"/download-log/{path}";
+        Navigation.NavigateTo(url, forceLoad: true);
+        }
+
+} 

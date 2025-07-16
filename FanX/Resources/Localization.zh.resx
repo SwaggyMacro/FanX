@@ -1,0 +1,860 @@
+<root>
+    <resheader name="resmimetype">
+        <value>text/microsoft-resx</value>
+    </resheader>
+    <resheader name="version">
+        <value>1.3</value>
+    </resheader>
+    <resheader name="reader">
+        <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <resheader name="writer">
+        <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <data name="AppName" xml:space="preserve">
+    <value>FanX</value>
+    <comment>Application name</comment>
+  </data>
+  
+  <!-- Login Page -->
+  <data name="LoginTitle" xml:space="preserve">
+    <value>用户登录</value>
+    <comment>Login page title</comment>
+  </data>
+  <data name="Username" xml:space="preserve">
+    <value>用户名</value>
+    <comment>Username field label</comment>
+  </data>
+  <data name="Password" xml:space="preserve">
+    <value>密码</value>
+    <comment>Password field label</comment>
+  </data>
+  <data name="RememberMe" xml:space="preserve">
+    <value>记住我</value>
+    <comment>Remember me checkbox label</comment>
+  </data>
+  <data name="LoginButton" xml:space="preserve">
+    <value>登录</value>
+    <comment>Login button text</comment>
+  </data>
+  <data name="LoggingIn" xml:space="preserve">
+    <value>登录中...</value>
+    <comment>Login button loading text</comment>
+  </data>
+  <data name="NoAccount" xml:space="preserve">
+    <value>还没有账户？立即注册</value>
+    <comment>Link to registration page</comment>
+  </data>
+  <data name="LoginSuccess" xml:space="preserve">
+    <value>登录成功！</value>
+    <comment>Login success message</comment>
+  </data>
+  <data name="LoginError" xml:space="preserve">
+    <value>用户名或密码错误</value>
+    <comment>Login error message</comment>
+  </data>
+  
+  <!-- Register Page -->
+  <data name="RegisterTitle" xml:space="preserve">
+    <value>用户注册</value>
+    <comment>Register page title</comment>
+  </data>
+  <data name="Email" xml:space="preserve">
+    <value>邮箱</value>
+    <comment>Email field label</comment>
+  </data>
+  <data name="ConfirmPassword" xml:space="preserve">
+    <value>确认密码</value>
+    <comment>Confirm password field label</comment>
+  </data>
+  <data name="RegisterButton" xml:space="preserve">
+    <value>注册</value>
+    <comment>Register button text</comment>
+  </data>
+  <data name="Registering" xml:space="preserve">
+    <value>注册中...</value>
+    <comment>Register button loading text</comment>
+  </data>
+  <data name="HasAccount" xml:space="preserve">
+    <value>已有账户？立即登录</value>
+    <comment>Link to login page</comment>
+  </data>
+  <data name="RegisterSuccess" xml:space="preserve">
+    <value>注册成功！请登录</value>
+    <comment>Register success message</comment>
+  </data>
+  <data name="RegisterError" xml:space="preserve">
+    <value>注册失败：用户名或邮箱已存在</value>
+    <comment>Register error message</comment>
+  </data>
+  
+  <!-- Navigation -->
+  <data name="Home" xml:space="preserve">
+    <value>首页</value>
+    <comment>Home navigation link</comment>
+  </data>
+  <data name="Dashboard" xml:space="preserve">
+    <value>仪表板</value>
+    <comment>Dashboard navigation link</comment>
+  </data>
+  <data name="Profile" xml:space="preserve">
+    <value>个人资料</value>
+    <comment>Profile navigation link</comment>
+  </data>
+  <data name="Login" xml:space="preserve">
+    <value>登录</value>
+    <comment>Login navigation link</comment>
+  </data>
+  <data name="Register" xml:space="preserve">
+    <value>注册</value>
+    <comment>Register navigation link</comment>
+  </data>
+  <data name="Logout" xml:space="preserve">
+    <value>注销</value>
+    <comment>Logout button text</comment>
+  </data>
+  <data name="Admin" xml:space="preserve">
+    <value>管理员</value>
+    <comment>Admin navigation group</comment>
+  </data>
+  <data name="UserManagement" xml:space="preserve">
+    <value>用户管理</value>
+    <comment>User management navigation link</comment>
+  </data>
+  <data name="SystemSettings" xml:space="preserve">
+    <value>系统设置</value>
+    <comment>System settings navigation link</comment>
+  </data>
+  <data name="FanControl" xml:space="preserve">
+    <value>风扇控制</value>
+    <comment>Fan Control navigation link</comment>
+  </data>
+  <!-- Home Page -->
+  <data name="WelcomeBack" xml:space="preserve">
+    <value>欢迎回来，{0}！</value>
+    <comment>Welcome message with username</comment>
+  </data>
+  <data name="UserInfo" xml:space="preserve">
+    <value>用户信息</value>
+    <comment>User info section title</comment>
+  </data>
+  <data name="UserRole" xml:space="preserve">
+    <value>角色</value>
+    <comment>User role label</comment>
+  </data>
+  <data name="NotLoggedIn" xml:space="preserve">
+    <value>您还未登录，请先登录以访问更多功能。</value>
+    <comment>Not logged in message</comment>
+  </data>
+  <data name="WelcomeTitle" xml:space="preserve">
+    <value>欢迎访问</value>
+    <comment>Welcome section title</comment>
+  </data>
+  <data name="WelcomeDescription" xml:space="preserve">
+    <value>这是一个使用 Blazor、MudBlazor、SQLite 和 SqlSugar 构建的登录鉴权示例应用。</value>
+    <comment>Welcome page description</comment>
+  </data>
+  <data name="LoginNow" xml:space="preserve">
+    <value>立即登录</value>
+    <comment>Login now button</comment>
+  </data>
+  <data name="RegisterAccount" xml:space="preserve">
+    <value>注册账户</value>
+    <comment>Register account button</comment>
+  </data>
+  
+  <!-- Common -->
+  <data name="Loading" xml:space="preserve">
+    <value>加载中...</value>
+    <comment>Loading text</comment>
+  </data>
+  <data name="Error" xml:space="preserve">
+    <value>错误</value>
+    <comment>Error text</comment>
+  </data>
+  <data name="Success" xml:space="preserve">
+    <value>成功</value>
+    <comment>Success text</comment>
+  </data>
+  <data name="Info" xml:space="preserve">
+    <value>信息</value>
+    <comment>Info text</comment>
+  </data>
+  <data name="Warning" xml:space="preserve">
+    <value>警告</value>
+    <comment>Warning text</comment>
+  </data>
+  
+  <!-- Language -->
+  <data name="Language" xml:space="preserve">
+    <value>语言</value>
+    <comment>Language selection label</comment>
+  </data>
+  <data name="English" xml:space="preserve">
+    <value>English</value>
+    <comment>English language option</comment>
+  </data>
+  <data name="Chinese" xml:space="preserve">
+    <value>中文</value>
+    <comment>Chinese language option</comment>
+  </data>
+  
+  <!-- Not Found Page -->
+  <data name="PageNotFound" xml:space="preserve">
+    <value>页面未找到</value>
+    <comment>404 page title</comment>
+  </data>
+  <data name="PageNotFoundMessage" xml:space="preserve">
+    <value>抱歉，您正在查找的页面不存在。</value>
+    <comment>404 page message</comment>
+  </data>
+  <data name="GoHome" xml:space="preserve">
+    <value>返回首页</value>
+  </data>
+  <data name="IpmiConfiguration" xml:space="preserve">
+    <value>IPMI 配置</value>
+  </data>
+  <data name="IpmiControl" xml:space="preserve">
+    <value>IPMI 控制</value>
+  </data>
+  <data name="Debug" xml:space="preserve">
+    <value>调试</value>
+  </data>
+  <data name="UserAccount" xml:space="preserve">
+    <value>用户账户</value>
+  </data>
+  <data name="PowerOn" xml:space="preserve">
+    <value>启动电源</value>
+  </data>
+  <data name="RealTimeStatus" xml:space="preserve">
+    <value>实时状态</value>
+  </data>
+  <data name="ProfileDescription" xml:space="preserve">
+    <value>您可以在此查看和编辑您的个人资料。</value>
+    <comment>Description for user profile page</comment>
+  </data>
+  <data name="DebugTools" xml:space="preserve">
+    <value>调试工具</value>
+    <comment>Debug page title</comment>
+  </data>
+  <data name="IpmiDiagnostics" xml:space="preserve">
+    <value>IPMI 诊断</value>
+    <comment>Debug page subtitle</comment>
+  </data>
+  <data name="GetFullSdrList" xml:space="preserve">
+    <value>获取完整的 SDR 列表</value>
+    <comment>Debug page button text</comment>
+  </data>
+  <data name="SdrListOutput" xml:space="preserve">
+    <value>SDR 列表输出：</value>
+    <comment>Label for SDR list output</comment>
+  </data>
+  <data name="UnknownError" xml:space="preserve">
+    <value>发生未知错误。</value>
+    <comment>Fallback error message</comment>
+  </data>
+  <data name="LogViewer" xml:space="preserve">
+    <value>日志查看器</value>
+    <comment>Debug page section title</comment>
+  </data>
+  <data name="SelectLogFile" xml:space="preserve">
+    <value>选择日志文件</value>
+    <comment>Label for log file selector</comment>
+  </data>
+  <data name="ViewLog" xml:space="preserve">
+    <value>查看日志</value>
+    <comment>Button text to view log</comment>
+  </data>
+  <data name="DownloadLog" xml:space="preserve">
+    <value>下载日志</value>
+  </data>
+  <data name="Refresh" xml:space="preserve">
+    <value>刷新</value>
+    <comment>Button text to refresh list</comment>
+  </data>
+  <data name="Role" xml:space="preserve">
+    <value>角色</value>
+  </data>
+  <data name="Active" xml:space="preserve">
+    <value>激活</value>
+  </data>
+  <data name="PromoteToAdmin" xml:space="preserve">
+    <value>晋升为管理员</value>
+  </data>
+  <data name="DemoteToUser" xml:space="preserve">
+    <value>降级为普通用户</value>
+  </data>
+  <data name="ConfirmDeleteUserTitle" xml:space="preserve">
+    <value>删除用户确认</value>
+  </data>
+  <data name="ConfirmDeleteUserMessage" xml:space="preserve">
+    <value>您确定要删除此用户吗？此操作无法撤销。</value>
+  </data>
+  <data name="DeleteUserSuccess" xml:space="preserve">
+    <value>用户删除成功。</value>
+  </data>
+  <data name="DeleteUserFailed" xml:space="preserve">
+    <value>删除用户失败。</value>
+  </data>
+  <data name="UpdateUserSuccess" xml:space="preserve">
+    <value>用户更新成功。</value>
+  </data>
+  <data name="UpdateUserFailed" xml:space="preserve">
+    <value>用户更新失败。</value>
+  </data>
+  <data name="ResetPassword" xml:space="preserve">
+    <value>重置密码</value>
+  </data>
+  <data name="ResetPasswordSuccess" xml:space="preserve">
+    <value>密码重置成功。</value>
+  </data>
+  <data name="ResetPasswordFailed" xml:space="preserve">
+    <value>密码重置失败。</value>
+  </data>
+  <data name="LogDirectoryNotFound" xml:space="preserve">
+    <value>未找到日志目录。</value>
+    <comment>Warning when log directory missing</comment>
+  </data>
+  <data name="ErrorLoadingLogFiles" xml:space="preserve">
+    <value>加载日志文件时出错：{0}</value>
+    <comment>Error message when loading files fails</comment>
+  </data>
+  <data name="ErrorReadingLogFile" xml:space="preserve">
+    <value>读取日志文件时出错：{0}</value>
+    <comment>Error message when reading log content fails</comment>
+  </data>
+  <data name="HostnameOrIpAddress" xml:space="preserve">
+    <value>主机名或 IP 地址</value>
+    <comment>Label for IPMI host field</comment>
+  </data>
+  <data name="SaveConfiguration" xml:space="preserve">
+    <value>保存配置</value>
+    <comment>Save configuration button text</comment>
+  </data>
+  <data name="SaveConfigurationSuccess" xml:space="preserve">
+    <value>配置已成功保存！</value>
+    <comment>Save configuration success message</comment>
+  </data>
+  <data name="GetSensorList" xml:space="preserve">
+    <value>获取传感器列表</value>
+    <comment>IPMI control button text</comment>
+  </data>
+  <data name="GetSdrList" xml:space="preserve">
+    <value>获取 SDR 列表</value>
+    <comment>IPMI control button text</comment>
+  </data>
+  <data name="GetFanSpeed" xml:space="preserve">
+    <value>获取风扇速度</value>
+    <comment>IPMI control button text</comment>
+  </data>
+  <data name="PowerStatus" xml:space="preserve">
+    <value>电源状态</value>
+    <comment>IPMI control button text</comment>
+  </data>
+  <data name="PowerOff" xml:space="preserve">
+    <value>关闭电源</value>
+    <comment>IPMI control button text</comment>
+  </data>
+  <data name="PowerCycle" xml:space="preserve">
+    <value>电源循环</value>
+    <comment>IPMI control button text</comment>
+  </data>
+  <data name="ConfirmAction" xml:space="preserve">
+    <value>确认操作</value>
+    <comment>Confirmation dialog title</comment>
+  </data>
+  <data name="ConfirmActionMessage" xml:space="preserve">
+    <value>您确定要执行以下操作：'{0}'？</value>
+    <comment>Confirmation dialog message with action name</comment>
+  </data>
+  <data name="Confirm" xml:space="preserve">
+    <value>确认</value>
+    <comment>Confirm button text in dialogs</comment>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>取消</value>
+    <comment>Cancel button text in dialogs</comment>
+  </data>
+  <data name="CommandSuccessful" xml:space="preserve">
+    <value>命令执行成功</value>
+    <comment>Snackbar success message after IPMI command</comment>
+  </data>
+  <data name="CommandFailed" xml:space="preserve">
+    <value>命令执行失败</value>
+    <comment>Snackbar error message after IPMI command</comment>
+  </data>
+  <data name="OutputLabel" xml:space="preserve">
+    <value>输出：</value>
+    <comment>Label before command output</comment>
+  </data>
+  <data name="FanSpeed" xml:space="preserve">
+    <value>风扇速度</value>
+    <comment>Column header for fan speed</comment>
+  </data>
+  <data name="RuleAdded" xml:space="preserve">
+    <value>规则已成功添加。</value>
+    <comment>Snackbar message after adding a rule</comment>
+  </data>
+  <data name="RuleUpdated" xml:space="preserve">
+    <value>规则已成功更新。</value>
+    <comment>Snackbar message after updating a rule</comment>
+  </data>
+  <data name="RuleDeleted" xml:space="preserve">
+    <value>规则已删除。</value>
+    <comment>Snackbar message after deleting a rule</comment>
+  </data>
+  <data name="ConfirmDeletion" xml:space="preserve">
+    <value>确认删除</value>
+    <comment>Title for delete confirmation dialog</comment>
+  </data>
+  <data name="ConfirmDeleteMessage" xml:space="preserve">
+    <value>您确定要删除此规则吗？</value>
+    <comment>Message for delete confirmation dialog</comment>
+  </data>
+  <data name="Delete" xml:space="preserve">
+    <value>删除</value>
+    <comment>Delete button text</comment>
+  </data>
+  <data name="TestDialogTitle" xml:space="preserve">
+    <value>测试对话框</value>
+    <comment>Title for test dialog</comment>
+  </data>
+  <data name="RuleStatusUpdated" xml:space="preserve">
+    <value>规则状态已更新。</value>
+    <comment>Snackbar message after toggling rule</comment>
+  </data>
+  <data name="AddRuleTitle" xml:space="preserve">
+    <value>添加规则</value>
+    <comment>Title for add rule dialog</comment>
+  </data>
+  <data name="AddButton" xml:space="preserve">
+    <value>添加</value>
+    <comment>Submit button text for add dialog</comment>
+  </data>
+  <data name="UpdateButton" xml:space="preserve">
+    <value>更新</value>
+    <comment>Submit button text for edit dialog</comment>
+  </data>
+  <data name="RuleEnabled" xml:space="preserve">
+    <value>规则已启用</value>
+    <comment>Label for rule enabled switch</comment>
+  </data>
+  <data name="InletTempThresholdLabel" xml:space="preserve">
+    <value>入口温度 (°C)</value>
+    <comment>Label for inlet temp threshold</comment>
+  </data>
+  <data name="ExhaustTempThresholdLabel" xml:space="preserve">
+    <value>出口温度 (°C)</value>
+    <comment>Label for exhaust temp threshold</comment>
+  </data>
+  <data name="PwrConsumptionThresholdLabel" xml:space="preserve">
+    <value>功耗 (W)</value>
+    <comment>Label for power consumption threshold</comment>
+  </data>
+  <data name="FanSpeedPercentLabel" xml:space="preserve">
+    <value>风扇速度 (%)</value>
+    <comment>Label for fan speed threshold</comment>
+  </data>
+  <data name="TargetFanSpeedLabel" xml:space="preserve">
+    <value>目标风扇速度 (%)</value>
+    <comment>Label for target fan speed threshold</comment>
+  </data>
+  <data name="Notes" xml:space="preserve">
+    <value>备注</value>
+    <comment>Label for notes field</comment>
+  </data>
+  <data name="TargetFanSpeedRequiredError" xml:space="preserve">
+    <value>目标转速是必填项。</value>
+    <comment>Validation message for target speed</comment>
+  </data>
+  <data name="TestDialogContent" xml:space="preserve">
+    <value>如果您可以关闭此对话框，则说明对话框机制正常工作。</value>
+    <comment>Content for test dialog</comment>
+  </data>
+  <data name="Close" xml:space="preserve">
+    <value>关闭</value>
+    <comment>Close button text</comment>
+  </data>
+  <data name="FanControlSettings" xml:space="preserve">
+    <value>风扇控制设置</value>
+    <comment>Fan control page title</comment>
+  </data>
+  <data name="FanControlMode" xml:space="preserve">
+    <value>风扇控制模式</value>
+    <comment>Fan control selector label</comment>
+  </data>
+  <data name="SelectMode" xml:space="preserve">
+    <value>选择模式</value>
+    <comment>Selector label for fan control mode</comment>
+  </data>
+  <data name="ManualMode" xml:space="preserve">
+    <value>手动</value>
+    <comment>Manual mode option</comment>
+  </data>
+  <data name="AutomaticSystemDefault" xml:space="preserve">
+    <value>自动（系统默认）</value>
+    <comment>Automatic mode option</comment>
+  </data>
+  <data name="SmartRuleBased" xml:space="preserve">
+    <value>智能（基于规则）</value>
+    <comment>Smart mode option</comment>
+  </data>
+  <data name="SmartControlRules" xml:space="preserve">
+    <value>智能控制规则</value>
+    <comment>Toolbar title for rules table</comment>
+  </data>
+  <data name="OpenTestDialog" xml:space="preserve">
+    <value>打开测试对话框</value>
+    <comment>Button to open test dialog</comment>
+  </data>
+  <data name="AddNewRule" xml:space="preserve">
+    <value>添加新规则</value>
+    <comment>Button text to add a new rule</comment>
+  </data>
+  <data name="Enabled" xml:space="preserve">
+    <value>启用</value>
+    <comment>Column header for enabled state</comment>
+  </data>
+  <data name="InletTemp" xml:space="preserve">
+    <value>入口温度</value>
+    <comment>Column header for inlet temperature</comment>
+  </data>
+  <data name="ExhaustTemp" xml:space="preserve">
+    <value>排气温度</value>
+    <comment>Column header for exhaust temperature</comment>
+  </data>
+  <data name="PowerConsumption" xml:space="preserve">
+    <value>功耗</value>
+    <comment>Column header for power consumption</comment>
+  </data>
+  <data name="Power" xml:space="preserve">
+    <value>功耗</value>
+  </data>
+  <data name="PowerHistory" xml:space="preserve">
+    <value>历史功耗(一小时前)</value>
+  </data>
+  <data name="Rule" xml:space="preserve">
+    <value>规则</value>
+  </data>
+  <data name="RuleAddFailed" xml:space="preserve">
+    <value>规则添加失败</value>
+  </data>
+  <data name="Temperature" xml:space="preserve">
+    <value>温度</value>
+  </data>
+  <data name="TemperatureHistory" xml:space="preserve">
+    <value>温度历史(一小时前)</value>
+  </data>
+  <data name="Fans" xml:space="preserve">
+    <value>风扇</value>
+  </data>
+  <data name="FanSpeedHistory" xml:space="preserve">
+    <value>风扇转速历史(一小时前)</value>
+  </data>
+  <data name="Disabled" xml:space="preserve">
+    <value>已禁用</value>
+  </data>
+  <data name="Cpu2TempThresholdLabel" xml:space="preserve">
+    <value>CPU2 温度(°C)</value>
+  </data>
+  <data name="Cpu2Temp" xml:space="preserve">
+    <value>CPU2 温度</value>
+  </data>
+  <data name="Cpu1TempThresholdLabel" xml:space="preserve">
+    <value>CPU1 温度(°C)</value>
+  </data>
+  <data name="Cpu1Temp" xml:space="preserve">
+    <value>CPU1 温度</value>
+  </data>
+
+  <!-- Notifications Page -->
+  <data name="Notifications" xml:space="preserve">
+    <value>通知</value>
+  </data>
+  <data name="NotificationSettings" xml:space="preserve">
+    <value>通知设置</value>
+  </data>
+  <data name="EnableNotifications" xml:space="preserve">
+    <value>启用通知</value>
+  </data>
+  <data name="WebhookSettings" xml:space="preserve">
+    <value>Webhook 设置</value>
+  </data>
+  <data name="EnableWebhook" xml:space="preserve">
+    <value>启用 Webhook</value>
+  </data>
+  <data name="WebhookURL" xml:space="preserve">
+    <value>Webhook URL</value>
+  </data>
+  <data name="TelegramSettings" xml:space="preserve">
+    <value>Telegram 设置</value>
+  </data>
+  <data name="EnableTelegramBot" xml:space="preserve">
+    <value>启用 Telegram Bot</value>
+  </data>
+  <data name="TelegramBotToken" xml:space="preserve">
+    <value>Telegram Bot Token</value>
+  </data>
+  <data name="TelegramChatID" xml:space="preserve">
+    <value>Telegram Chat ID</value>
+  </data>
+  <data name="SaveSettings" xml:space="preserve">
+    <value>保存设置</value>
+  </data>
+  <data name="SettingsSavedSuccess" xml:space="preserve">
+    <value>设置已成功保存！</value>
+  </data>
+  <data name="SettingsSaveFailed" xml:space="preserve">
+    <value>保存设置失败。</value>
+  </data>
+  <data name="AllowRegistration" xml:space="preserve">
+    <value>是否允许注册</value>
+  </data>
+  <data name="ClearSensorData" xml:space="preserve">
+    <value>清空传感器数据</value>
+  </data>
+  <data name="NotificationRules" xml:space="preserve">
+    <value>通知规则</value>
+  </data>
+  <data name="Rules" xml:space="preserve">
+    <value>规则</value>
+  </data>
+  <data name="Conditions" xml:space="preserve">
+    <value>条件</value>
+  </data>
+  <data name="CooldownMins" xml:space="preserve">
+    <value>冷却时间 (分钟)</value>
+  </data>
+  <data name="Actions" xml:space="preserve">
+    <value>操作</value>
+  </data>
+  <data name="DeleteRuleConfirmTitle" xml:space="preserve">
+    <value>确认删除</value>
+  </data>
+  <data name="DeleteRuleConfirmMessage" xml:space="preserve">
+    <value>您确定要删除此规则吗？此操作无法撤销。</value>
+  </data>
+  <data name="RuleDeleteFailed" xml:space="preserve">
+    <value>删除规则失败。</value>
+  </data>
+  <data name="AddRule" xml:space="preserve">
+    <value>添加规则</value>
+  </data>
+  <data name="EditRule" xml:space="preserve">
+    <value>编辑规则</value>
+  </data>
+  
+  <!-- Add/Edit Rule Dialog -->
+  <data name="RuleName" xml:space="preserve">
+    <value>规则名称</value>
+  </data>
+  <data name="MessageTemplate" xml:space="preserve">
+    <value>消息模板</value>
+  </data>
+  <data name="TemplateVariables" xml:space="preserve">
+    <value>可用变量: {RuleName}, {ConditionsSummary}</value>
+  </data>
+  <data name="ConditionsHelpText" xml:space="preserve">
+    <value>必须满足所有条件才能触发此规则。</value>
+  </data>
+  <data name="AddCondition" xml:space="preserve">
+    <value>添加条件</value>
+  </data>
+  <data name="Sensor" xml:space="preserve">
+    <value>传感器</value>
+  </data>
+  <data name="Operator" xml:space="preserve">
+    <value>运算符</value>
+  </data>
+  <data name="OperatorEqualTo" xml:space="preserve">
+    <value>等于</value>
+  </data>
+  <data name="OperatorGreaterThan" xml:space="preserve">
+    <value>大于</value>
+  </data>
+  <data name="OperatorLessThan" xml:space="preserve">
+    <value>小于</value>
+  </data>
+  <data name="Threshold" xml:space="preserve">
+    <value>阈值</value>
+  </data>
+  <data name="NoConditions" xml:space="preserve">
+    <value>尚未添加任何条件。请至少添加一个条件以激活规则。</value>
+  </data>
+  <data name="FixValidationErrors" xml:space="preserve">
+    <value>请修正验证错误。</value>
+  </data>
+  <data name="RuleSaveFailed" xml:space="preserve">
+    <value>保存规则失败。</value>
+  </data>
+  <data name="RuleSavedSuccess" xml:space="preserve">
+    <value>规则已成功保存！</value>
+  </data>
+
+  <!-- Add Condition Dialog -->
+  <data name="AddConditionTitle" xml:space="preserve">
+    <value>添加条件</value>
+  </data>
+  <data name="TestButton" xml:space="preserve">
+    <value>测试</value>
+  </data>
+  <data name="TestFailedMessage" xml:space="preserve">
+    <value>发送测试通知失败。请检查您的设置和应用程序日志。</value>
+  </data>
+  <data name="TestMessageBody" xml:space="preserve">
+    <value>这是一条来自 FanX 的测试通知。</value>
+  </data>
+  <data name="TestMessageTitle" xml:space="preserve">
+    <value>测试通知</value>
+  </data>
+  <data name="TestSuccessMessage" xml:space="preserve">
+    <value>测试通知发送成功！</value>
+  </data>
+  <data name="WeComBotKey" xml:space="preserve">
+    <value>企业微信机器人Key</value>
+  </data>
+  <data name="WeComBotSettings" xml:space="preserve">
+    <value>企业微信机器人设置</value>
+  </data>
+  <data name="EnableWeComBot" xml:space="preserve">
+    <value>启用企业微信机器人</value>
+  </data>
+  <data name="WebhookRequestMethod" xml:space="preserve">
+    <value>请求方法</value>
+  </data>
+  <data name="WebhookBodyTemplate" xml:space="preserve">
+    <value>请求正文模板</value>
+  </data>
+  <data name="WebhookTemplateHelpText" xml:space="preserve">
+    <value>使用 {Title} 和 {Message} 作为占位符。内容将以 JSON 格式发送。</value>
+  </data>
+  <data name="EditConditionTitle" xml:space="preserve">
+    <value>编辑条件</value>
+  </data>
+  <data name="System" xml:space="preserve">
+    <value>系统</value>
+  </data>
+  <data name="TargetFans" xml:space="preserve">
+    <value>目标风扇</value>
+  </data>
+  <data name="TargetFansRequiredError" xml:space="preserve">
+    <value>您必须至少选择一个目标风扇。</value>
+  </data>
+  <data name="TargetFanSpeed" xml:space="preserve">
+    <value>目标风扇速度</value>
+  </data>
+  <data name="TargetSpeedRequiredError" xml:space="preserve">
+    <value>你必须设置转速。</value>
+  </data>
+  <data name="FanDebug" xml:space="preserve">
+    <value>风扇调试</value>
+  </data>
+  <data name="EnableManualControl" xml:space="preserve">
+    <value>启用手动控制</value>
+  </data>
+  <data name="EnableAutoControl" xml:space="preserve">
+    <value>启用自动控制</value>
+  </data>
+  <data name="ControlAllFan" xml:space="preserve">
+    <value>一次控制所有风扇</value>
+  </data>
+  <data name="Set" xml:space="preserve">
+    <value>设定</value>
+  </data>
+  <data name="ControlSingleFan" xml:space="preserve">
+    <value>控制单个风扇</value>
+  </data>
+  <data name="ChooseFan" xml:space="preserve">
+    <value>选择风扇</value>
+  </data>
+  <data name="InvalidChosenFan" xml:space="preserve">
+    <value>选择的风扇无效</value>
+  </data>
+  <data name="FanSpeedSetTo" xml:space="preserve">
+    <value>已将风扇 {0} 设置为 {1}%</value>
+  </data>
+  <data name="SetAllFansSpeedTo" xml:space="preserve">
+    <value>Set all fans speed to {0}%</value>
+  </data>
+  <data name="PleaseChooseAFan" xml:space="preserve">
+    <value>请先选择一个风扇</value>
+  </data>
+  <data name="SetToAutoControlFanModeSucceed" xml:space="preserve">
+    <value>已成功切换到自动风扇控制模式。</value>
+  </data>
+  <data name="SetToManualControlFanModeSucceed" xml:space="preserve">
+    <value>已成功切换到手动风扇控制模式。</value>
+  </data>
+  <data name="FanSensorNotFound" xml:space="preserve">
+    <value>未找到风扇传感器</value>
+  </data>
+  <data name="UnknownErrorWhenGetSensorData" xml:space="preserve">
+    <value>获取传感器数据时发生未知错误</value>
+  </data>
+  <data name="FailedToLoadSensorList" xml:space="preserve">
+    <value>加载传感器列表失败</value>
+  </data>
+  <data name="ChangePasswordFailed" xml:space="preserve">
+    <value>无法修改密码。</value>
+  </data>
+  <data name="ChangePassword" xml:space="preserve">
+    <value>修改密码</value>
+  </data>
+  <data name="CurrentPassword" xml:space="preserve">
+    <value>当前密码</value>
+  </data>
+  <data name="NewPassword" xml:space="preserve">
+    <value>新密码</value>
+  </data>
+  <data name="ConfirmPasswordMismatch" xml:space="preserve">
+    <value>新密码与确认密码不匹配。</value>
+  </data>
+  <data name="ClearLogs" xml:space="preserve">
+    <value>清空日志</value>
+  </data>
+  <data name="LogRetentionDays" xml:space="preserve">
+    <value>日志保留（天）</value>
+  </data>
+  <data name="SensorDataRetentionDays" xml:space="preserve">
+    <value>传感器数据保留（天）</value>
+  </data>
+  <data name="RegistrationDisabled" xml:space="preserve">
+    <value>站点已关闭注册</value>
+  </data>
+  <data name="AddUser" xml:space="preserve">
+    <value>添加用户</value>
+  </data>
+  <data name="AddUserFailed" xml:space="preserve">
+    <value>添加用户失败。</value>
+  </data>
+  <data name="AddUserSuccess" xml:space="preserve">
+    <value>添加用户成功。</value>
+  </data>
+  <data name="EmailSettings" xml:space="preserve">
+    <value>邮件通知设置</value>
+  </data>
+  <data name="EnableEmailNotifications" xml:space="preserve">
+    <value>启用邮件通知</value>
+  </data>
+  <data name="EmailRecipients" xml:space="preserve">
+    <value>邮件收信人</value>
+  </data>
+  <data name="SmtpHost" xml:space="preserve">
+    <value>Smtp 地址</value>
+  </data>
+  <data name="SmtpPort" xml:space="preserve">
+    <value>Smtp 端口</value>
+  </data>
+  <data name="SmtpUser" xml:space="preserve">
+    <value>Smtp 账号</value>
+  </data>
+  <data name="SmtpPassword" xml:space="preserve">
+    <value>Smtp 密码</value>
+  </data>
+  <data name="EnableSsl" xml:space="preserve">
+    <value>启用 SSL</value>
+  </data>
+  <data name="RedirectingToLogin" xml:space="preserve">
+    <value>正在跳转至登录页面...</value>
+  </data>
+</root>

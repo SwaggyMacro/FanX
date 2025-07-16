@@ -1,0 +1,141 @@
+@page "/ipmi-control"
+@attribute [Authorize(Roles = "Admin")]
+@using FanX.Resources
+@inject IpmiService IpmiService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject LocalizationService LocalizationService
+@implements IDisposable
+
+<PageTitle>@Localization.IpmiControl</PageTitle>
+
+<MudCard>
+    <MudCardContent>
+        <MudStack Row="true" Spacing="2" Style="flex-wrap: wrap;">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@GetSensorList" Disabled="@_isLoading" Class="my-1" StartIcon="@Icons.Material.Filled.List">@Localization.GetSensorList</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="@GetSdrList" Disabled="@_isLoading" Class="my-1" StartIcon="@Icons.Material.Filled.Storage">@Localization.GetSdrList</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Tertiary" OnClick="@GetFanSpeed" Disabled="@_isLoading" Class="my-1" StartIcon="@Icons.Material.Filled.Air">@Localization.GetFanSpeed</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Info" OnClick="@GetPowerStatus" Disabled="@_isLoading" Class="my-1" StartIcon="@Icons.Material.Filled.Power">@Localization.PowerStatus</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="@(() => ConfirmAndExecutePowerAction("on"))" Disabled="@_isLoading" Class="my-1" StartIcon="@Icons.Material.Filled.PowerSettingsNew">@Localization.PowerOn</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="@(() => ConfirmAndExecutePowerAction("off"))" Disabled="@_isLoading" Class="my-1" StartIcon="@Icons.Material.Filled.PowerOff">@Localization.PowerOff</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Warning" OnClick="@(() => ConfirmAndExecutePowerAction("cycle"))" Disabled="@_isLoading" Class="my-1" StartIcon="@Icons.Material.Filled.Refresh">@Localization.PowerCycle</MudButton>
+        </MudStack>
+        
+        @if (_isLoading)
+        {
+            <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-4" />
+        }
+        
+        @if (_tableData.Any())
+        {
+            <MudTable Items="@_tableData" Hover="true" Striped="true" Class="mt-4" Elevation="3">
+                <HeaderContent>
+                    @foreach (var header in _tableHeaders)
+                    {
+                        <MudTh>@header</MudTh>
+                    }
+                </HeaderContent>
+                <RowTemplate>
+                    @{ var i = 0; }
+                    @foreach (var cell in context)
+                    {
+                        <MudTd DataLabel="@(i < _tableHeaders.Length ? _tableHeaders[i++] : "")">@cell</MudTd>
+                    }
+                </RowTemplate>
+            </MudTable>
+        }
+        else if (!string.IsNullOrEmpty(_output))
+        {
+            <MudPaper Class="pa-4 mt-4" Elevation="3">
+                <MudText Typo="Typo.h6">@Localization.OutputLabel</MudText>
+                <pre>@_output</pre>
+            </MudPaper>
+        }
+        
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <MudAlert Severity="Severity.Error" Class="mt-4">@_error</MudAlert>
+        }
+    </MudCardContent>
+</MudCard>
+
+@code {
+    private bool _isLoading;
+    private string? _output;
+    private string? _error;
+    private string[] _tableHeaders = [];
+    private List<string[]> _tableData = [];
+
+    protected override void OnInitialized()
+    {
+        LocalizationService.OnLanguageChanged += StateHasChanged;
+    }
+
+    private async Task ExecuteCommand(Func<Task<(bool success, string output, string error)>> command, string[]? headers = null)
+    {
+        _isLoading = true;
+        _output = null;
+        _error = null;
+        _tableData.Clear();
+        _tableHeaders = [];
+
+        var (success, output, error) = await command();
+
+        if (success)
+        {
+            var resultText = string.IsNullOrWhiteSpace(output) ? "Command executed successfully with no output." : output;
+            if (headers != null && headers.Any() && !string.IsNullOrWhiteSpace(output))
+            {
+                _tableHeaders = headers;
+                ParseToTable(output);
+            }
+            else
+            {
+                _output = resultText;
+            }
+            Snackbar.Add(Localization.CommandSuccessful, Severity.Success);
+        }
+        else
+        {
+            _error = error;
+            Snackbar.Add(Localization.CommandFailed, Severity.Error);
+        }
+        
+        _isLoading = false;
+    }
+
+    private void ParseToTable(string rawOutput)
+    {
+        var lines = rawOutput.Trim().Split('\n').Where(l => !string.IsNullOrWhiteSpace(l)).ToList();
+        if (!lines.Any())
+        {
+            _output = "Command executed successfully with no output.";
+            return;
+        }
+
+        _tableData = lines.Select(line => line.Split('|').Select(c => c.Trim()).ToArray()).ToList();
+    }
+
+    private async Task GetSensorList() => await ExecuteCommand(IpmiService.GetSdrListAsync, ["Sensor Name", "ID", "Status", "Entity", "Reading"]);
+    private async Task GetSdrList() => await ExecuteCommand(IpmiService.GetSdrListAsync, ["Sensor Name", "ID", "Status", "Entity", "Reading"]);
+    private async Task GetFanSpeed() => await ExecuteCommand(IpmiService.GetSdrListAsync, ["Sensor Name", "ID", "Status", "Entity", "Reading"]);
+    private async Task GetPowerStatus() => await ExecuteCommand(() => IpmiService.PowerControlAsync("status"));
+
+    private async Task ConfirmAndExecutePowerAction(string action)
+    {
+        var result = await DialogService.ShowMessageBox(
+            Localization.ConfirmAction,
+            string.Format(Localization.ConfirmActionMessage, action.ToUpper()),
+            yesText: Localization.Confirm, cancelText: Localization.Cancel);
+
+        if (result == true)
+        {
+            await ExecuteCommand(() => IpmiService.PowerControlAsync(action));
+        }
+    }
+
+    public void Dispose()
+    {
+        LocalizationService.OnLanguageChanged -= StateHasChanged;
+    }
+} 

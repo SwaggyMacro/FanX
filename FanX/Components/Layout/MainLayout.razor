@@ -1,0 +1,57 @@
+﻿@inherits LayoutComponentBase
+@using FanX.Resources
+@inject LocalizationService LocalizationService
+@inject ThemeService ThemeService
+@implements IAsyncDisposable
+
+<MudThemeProvider @ref="_themeProvider" IsDarkMode="ThemeService.IsDarkMode" Theme="ThemeService.CurrentTheme" />
+<MudPopoverProvider />
+
+<MudLayout>
+    <MudAppBar Elevation="1">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@DrawerToggle" />
+        <MudText Typo="Typo.h6">@Localization.AppName</MudText>
+        <MudSpacer />
+        <LanguageSelector />
+        <MudIconButton Icon="@(ThemeService.IsDarkMode ? Icons.Material.Filled.Brightness7 : Icons.Material.Filled.Brightness4)" Color="Color.Inherit" OnClick="ToggleTheme" />
+    </MudAppBar>
+
+    <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
+        <NavMenu />
+    </MudDrawer>
+
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="pt-4">
+            @Body
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    private MudThemeProvider? _themeProvider;
+    private bool _drawerOpen = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        ThemeService.OnThemeChanged += StateHasChanged;
+        LocalizationService.OnLanguageChanged += StateHasChanged;
+        await ThemeService.InitializeAsync();
+    }
+    
+    private void DrawerToggle()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+
+    private void ToggleTheme()
+    {
+        ThemeService.ToggleTheme();
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        ThemeService.OnThemeChanged -= StateHasChanged;
+        LocalizationService.OnLanguageChanged -= StateHasChanged;
+        return ValueTask.CompletedTask;
+    }
+}
