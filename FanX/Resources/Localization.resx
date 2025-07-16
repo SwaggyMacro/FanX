@@ -191,6 +191,14 @@
     <value>Warning</value>
     <comment>Warning text</comment>
   </data>
+  <data name="RuleOrderUpdated" xml:space="preserve">
+    <value>Rule order updated.</value>
+    <comment>Snackbar message after updating rule order</comment>
+  </data>
+  <data name="RuleOrderMoveFailed" xml:space="preserve">
+    <value>Cannot move rule further.</value>
+    <comment>Snackbar warning when rule cannot be moved</comment>
+  </data>
   
   <!-- Language -->
   <data name="Language" xml:space="preserve">

@@ -12,6 +12,9 @@ public class FanControlRule
 
     public string Name { get; set; } = string.Empty;
 
+    // Field for custom sort order
+    public int SortOrder { get; set; }
+
     public int TargetFanSpeedPercent { get; set; }
 
     public string TargetFanNamesJson { get; set; } = "[]";
@@ -21,4 +24,4 @@ public class FanControlRule
     
     [SugarColumn(IsIgnore = true)]
     public List<FanControlCondition> Conditions { get; set; } = new();
-} 
+}

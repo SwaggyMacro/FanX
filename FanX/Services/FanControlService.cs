@@ -14,7 +14,9 @@ namespace FanX.Services
 
         public async Task<List<FanControlRule>> GetRulesAsync()
         {
-            var rules = await _dbService.Db.Queryable<FanControlRule>().ToListAsync();
+            var rules = await _dbService.Db.Queryable<FanControlRule>()
+                .OrderBy(r => r.SortOrder)
+                .ToListAsync();
             if (rules.Count == 0) return rules;
             var ruleIds = rules.Select(r => r.Id).ToList();
             var allConditions = await _dbService.Db.Queryable<FanControlCondition>().Where(c => ruleIds.Contains(c.RuleId)).ToListAsync();
@@ -56,7 +58,7 @@ namespace FanX.Services
 
                 await _dbService.Db.Deleteable<FanControlCondition>().Where(c => c.RuleId == rule.Id).ExecuteCommandAsync();
 
-                if (rule.Conditions != null && rule.Conditions.Count != 0)
+                if (rule.Conditions.Any())
                 {
                     rule.Conditions.ForEach(c => { c.RuleId = rule.Id; c.Id = 0; });
                     await _dbService.Db.Insertable(rule.Conditions).ExecuteCommandAsync();
@@ -111,4 +113,4 @@ namespace FanX.Services
             await _dbService.Db.Storageable(setting).ExecuteCommandAsync();
         }
     }
-} 
+}

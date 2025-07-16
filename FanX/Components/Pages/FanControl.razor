@@ -33,6 +33,7 @@
                 <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="@(() => OpenAddEditDialog(0))">@Localization.AddNewRule</MudButton>
             </ToolBarContent>
             <HeaderContent>
+                <MudTh></MudTh> <!-- Sort order column -->
                 <MudTh>@Localization.Enabled</MudTh>
                 <MudTh>@Localization.RuleName</MudTh>
                 <MudTh>@Localization.Conditions</MudTh>
@@ -40,6 +41,14 @@
                 <MudTh>@Localization.Actions</MudTh>
             </HeaderContent>
             <RowTemplate>
+                <MudTd DataLabel=""> <!-- Order controls -->
+                    <MudIconButton Icon="@Icons.Material.Filled.ArrowUpward"
+                                   Disabled="@(context.SortOrder == _rules.First().SortOrder)"
+                                   OnClick="@(async () => await MoveUp(context.Id))" Size="Size.Small" />
+                    <MudIconButton Icon="@Icons.Material.Filled.ArrowDownward"
+                                   Disabled="@(context.SortOrder == _rules.Last().SortOrder)"
+                                   OnClick="@(async () => await MoveDown(context.Id))" Size="Size.Small" />
+                </MudTd>
                 <MudTd DataLabel="@Localization.Enabled">
                     <div class="form-check form-switch">
                         <input class="form-check-input" type="checkbox" role="switch"
@@ -119,9 +128,52 @@
     private async Task LoadRules()
     {
         _rules = await FanControlService.GetRulesAsync();
-        if (_rules.Any())
+        // Ensure SortOrder values are unique and sequential if missing
+        for (int i = 0; i < _rules.Count; i++)
         {
-            LoggerService.Info($"[FanControl] LoadRules finished. First rule (ID {_rules.First().Id}) has IsEnabled = {_rules.First().IsEnabled}.");
+            if (_rules[i].SortOrder != i)
+            {
+                _rules[i].SortOrder = i;
+                await FanControlService.SaveRuleAsync(_rules[i]);
+            }
+        }
+    }
+    private async Task MoveUp(int ruleId)
+    {
+        var index = _rules.FindIndex(r => r.Id == ruleId);
+        if (index > 0)
+        {
+            var curr = _rules[index];
+            var prev = _rules[index - 1];
+            (curr.SortOrder, prev.SortOrder) = (prev.SortOrder, curr.SortOrder);
+            await FanControlService.SaveRuleAsync(prev);
+            await FanControlService.SaveRuleAsync(curr);
+            await LoadRules();
+            StateHasChanged();
+            Snackbar.Add(Localization.RuleOrderUpdated, Severity.Success);
+        }
+        else
+        {
+            Snackbar.Add(Localization.RuleOrderMoveFailed, Severity.Warning);
+        }
+    }
+    private async Task MoveDown(int ruleId)
+    {
+        var index = _rules.FindIndex(r => r.Id == ruleId);
+        if (index >= 0 && index < _rules.Count - 1)
+        {
+            var curr = _rules[index];
+            var next = _rules[index + 1];
+            (curr.SortOrder, next.SortOrder) = (next.SortOrder, curr.SortOrder);
+            await FanControlService.SaveRuleAsync(next);
+            await FanControlService.SaveRuleAsync(curr);
+            await LoadRules();
+            StateHasChanged();
+            Snackbar.Add(Localization.RuleOrderUpdated, Severity.Success);
+        }
+        else
+        {
+            Snackbar.Add(Localization.RuleOrderMoveFailed, Severity.Warning);
         }
     }
 
@@ -164,4 +216,4 @@
     {
         LocalizationService.OnLanguageChanged -= StateHasChanged;
     }
-} 
+}

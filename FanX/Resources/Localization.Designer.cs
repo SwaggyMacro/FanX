@@ -1581,6 +1581,24 @@ namespace FanX.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot move rule further..
+        /// </summary>
+        internal static string RuleOrderMoveFailed {
+            get {
+                return ResourceManager.GetString("RuleOrderMoveFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Rule order updated..
+        /// </summary>
+        internal static string RuleOrderUpdated {
+            get {
+                return ResourceManager.GetString("RuleOrderUpdated", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Rules.
         /// </summary>
         internal static string Rules {

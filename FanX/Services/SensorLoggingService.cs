@@ -69,74 +69,42 @@ namespace FanX.Services
             // If we reach here, the mode is Smart.
             var rules = (await fanControlService.GetRulesAsync())
                 .Where(r => r.IsEnabled && r.Conditions.Any())
-                .OrderByDescending(r => r.TargetFanSpeedPercent)
+                .OrderBy(r => r.SortOrder)
                 .ToList();
-
-            FanControlRule? triggeredRule = null;
+            bool anyTriggered = false;
+            // Switch to manual mode once before applying rules
+            await ipmiService.SetManualFanControlAsync();
             foreach (var rule in rules)
             {
-                bool result = false;
+                bool match = false;
                 for (int i = 0; i < rule.Conditions.Count; i++)
                 {
-                    var condition = rule.Conditions[i];
-                    var sensor = sensorData.FirstOrDefault(s => s.SensorName != null && s.SensorName.Equals(condition.SensorName, StringComparison.OrdinalIgnoreCase));
-                    var current = sensor != null && IsConditionMet(sensor.Reading, condition.Threshold, condition.Operator);
+                    var cond = rule.Conditions[i];
+                    var sensor = sensorData.FirstOrDefault(s => s.SensorName != null && s.SensorName.Equals(cond.SensorName, StringComparison.OrdinalIgnoreCase));
+                    var current = sensor != null && IsConditionMet(sensor.Reading, cond.Threshold, cond.Operator);
                     if (i == 0)
-                    {
-                        result = current;
-                }
+                        match = current;
+                    else if (cond.Connector == ConditionLogicalOperator.And)
+                        match &= current;
                     else
-                    {
-                        if (condition.Connector == ConditionLogicalOperator.And)
-                            result = result && current;
-                        else
-                            result = result || current;
-                    }
+                        match |= current;
                 }
-                if (result)
+                if (match)
                 {
-                    triggeredRule = rule;
-                    break;
+                    anyTriggered = true;
+                    foreach (var fanName in rule.TargetFanNames)
+                    {
+                        var fanSensor = sensorData.FirstOrDefault(s => s.SensorName != null && s.SensorName.Equals(fanName, StringComparison.OrdinalIgnoreCase));
+                        if (fanSensor?.SensorId != null)
+                        {
+                            LoggerService.Info($"Rule '{rule.Name}' triggered. Setting fan '{fanName}' to {rule.TargetFanSpeedPercent}%.");
+                            await ipmiService.SetIndividualFanSpeedAsync(fanSensor.SensorId, rule.TargetFanSpeedPercent);
+                        }
+                    }
                 }
             }
-
-            if (triggeredRule != null)
+            if (!anyTriggered)
             {
-                var metConditionsDescriptions = new List<string>();
-                foreach (var condition in triggeredRule.Conditions)
-                {
-                    var sensor = sensorData.FirstOrDefault(s => s.SensorName != null && s.SensorName.Equals(condition.SensorName, StringComparison.OrdinalIgnoreCase));
-                    if (sensor != null)
-                    {
-                        var opString = condition.Operator switch
-                        {
-                            TriggerOperator.GreaterThan => ">",
-                            TriggerOperator.LessThan => "<",
-                            TriggerOperator.EqualTo => "==",
-                            _ => "?"
-                        };
-                        metConditionsDescriptions.Add($"'{sensor.SensorName}' ({sensor.Reading:F1}{sensor.Unit}) {opString} {condition.Threshold}");
-                    }
-                }
-                
-                var logMessage = $"Fan control rule '{triggeredRule.Name}' triggered. Conditions met: [{string.Join(" AND ", metConditionsDescriptions)}]. " +
-                                 $"Setting fans [{string.Join(", ", triggeredRule.TargetFanNames)}] to {triggeredRule.TargetFanSpeedPercent}%.";
-                
-                LoggerService.Info(logMessage);
-                
-                await ipmiService.SetManualFanControlAsync();
-
-                foreach (var fanName in triggeredRule.TargetFanNames)
-                {
-                    var fanSensor = sensorData.FirstOrDefault(s => s.SensorName == fanName);
-                    if (fanSensor?.SensorId != null)
-                    {
-                        await ipmiService.SetIndividualFanSpeedAsync(fanSensor.SensorId, triggeredRule.TargetFanSpeedPercent);
-                    }
-                }
-                    }
-                    else
-                    {
                 LoggerService.Info("No fan control rule triggered. Setting fans to automatic.");
                 await ipmiService.SetAutomaticFanControlAsync();
             }
@@ -165,4 +133,4 @@ namespace FanX.Services
             _timer?.Dispose();
         }
     }
-} 
+}
