@@ -13,6 +13,7 @@
 
 <MudText Typo="Typo.h5" GutterBottom="true">@Localization.Dashboard</MudText>
 
+<!-- Live Status Section -->
 <MudGrid Spacing="3" Class="mb-4">
     <MudItem xs="12">
         <MudText Typo="Typo.h6">Live Status</MudText>
@@ -130,13 +131,29 @@
     </MudItem>
 </MudGrid>
     
+<!-- Charts Section -->
+<MudGrid Spacing="3" Class="mb-4">
+    <MudItem xs="12">
+        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+            <MudText Typo="Typo.h6">Historical Data</MudText>
+            <MudSelect T="int" Value="_selectedTimeRange" ValueChanged="OnTimeRangeChanged" 
+                      Label="Chart Time Range" Variant="Variant.Outlined" Margin="Margin.Dense">
+                <MudSelectItem Value="1">Last 1 Hour</MudSelectItem>
+                <MudSelectItem Value="6">Last 6 Hours</MudSelectItem>
+                <MudSelectItem Value="24">Last 24 Hours</MudSelectItem>
+                <MudSelectItem Value="168">Last 7 Days</MudSelectItem>
+            </MudSelect>
+        </MudStack>
+    </MudItem>
+</MudGrid>
+
 <MudGrid Spacing="3">
     <MudItem xs="12" md="4">
         <MudStack Spacing="3">
             <MudPaper Class="pa-3">
             <MudText Typo="Typo.h6">@Localization.TemperatureHistory</MudText>
             <ApexChart TItem="SensorData" Options="_temperatureChartOptions" @ref="_temperatureChart">
-                @foreach (var series in _allData.Where(d => d.SensorType == "Temperature").GroupBy(d => d.SensorName))
+                @foreach (var series in _chartData.Where(d => d.SensorType == "Temperature").GroupBy(d => d.SensorName))
                 {
                     <ApexPointSeries TItem="SensorData" Items="series.ToList()" Name="@series.Key"
                                      XValue="@(item => item.Timestamp)"
@@ -148,7 +165,7 @@
                 <MudText Typo="Typo.h6">@Localization.PowerHistory</MudText>
                 <ApexChart TItem="SensorData" Options="_powerChartOptions" @ref="_powerChart">
                     <ApexPointSeries TItem="SensorData"
-                                     Items="@(_allData.Where(d => d.SensorName == "Pwr Consumption").ToList())"
+                                     Items="@(_chartData.Where(d => d.SensorName == "Pwr Consumption").ToList())"
                                      Name="Power Consumption"
                                      XValue="@(item => item.Timestamp)"
                                      YValue="@(item => Convert.ToDecimal(item.Reading))"/>
@@ -161,7 +178,7 @@
         <MudPaper Class="pa-3 d-flex flex-column" Style="height: 100%">
             <MudText Typo="Typo.h6" GutterBottom="true">@Localization.FanSpeedHistory</MudText>
             <ApexChart TItem="SensorData" Options="_fanChartOptions" @ref="_fanChart">
-                @foreach (var series in _allData.Where(d => d.SensorType == "Fan" && d.SensorName != "Fan Redundancy").GroupBy(d => d.SensorName))
+                @foreach (var series in _chartData.Where(d => d.SensorType == "Fan" && d.SensorName != "Fan Redundancy").GroupBy(d => d.SensorName))
                 {
                     <ApexPointSeries TItem="SensorData" Items="series.ToList()" Name="@series.Key"
                                      XValue="@(item => item.Timestamp)"
@@ -181,7 +198,7 @@
     private ApexChart<SensorData>? _fanChart;
     private ApexChart<SensorData>? _powerChart;
 
-    private List<SensorData> _allData = new();
+    private List<SensorData> _chartData = new();
     private List<SensorData> _liveCpuData = new();
     private List<SensorData> _liveFanData = new();
     private SensorData? _livePowerData;
@@ -190,6 +207,11 @@
     private (double Hour, double Day, double Week, double Month, double Min, double Max) _powerAverages;
     private readonly Dictionary<string, (double Hour, double Day, double Week, double Month, double Min, double Max)> _fanAverages = new();
 
+    // Performance optimization variables
+    private int _selectedTimeRange = 24; // Hours
+    private DateTime _lastDataUpdate = DateTime.MinValue;
+    private readonly Dictionary<int, List<SensorData>> _chartDataCache = new();
+    private const int MaxDataPoints = 500; // Limit chart data points for performance
 
     protected override async Task OnInitializedAsync()
     {
@@ -197,7 +219,7 @@
         LocalizationService.OnLanguageChanged += StateHasChanged;
         InitializeChartOptions();
         await LoadData();
-        _timer = new Timer(async void (_) => await InvokeAsync(LoadData), null, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5));
+        _timer = new Timer(async void (_) => await InvokeAsync(LoadLiveData), null, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5));
     }
 
     private async void OnThemeChanged()
@@ -206,7 +228,66 @@
         await InvokeAsync(StateHasChanged);
     }
 
+    private async Task OnTimeRangeChanged(int newRange)
+    {
+        _selectedTimeRange = newRange;
+        await LoadChartData();
+        await InvokeAsync(StateHasChanged);
+    }
+
     private async Task LoadData()
+    {
+        await LoadLiveData();
+        await LoadChartData();
+    }
+
+    private async Task LoadLiveData()
+    {
+        await using var scope = ScopeFactory.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<DatabaseService>().Db;
+
+        var now = DateTime.Now;
+        var hourAgo = now.AddHours(-1);
+
+        // Only load recent data for live status (much faster)
+        var recentData = await db.Queryable<SensorData>()
+            .Where(s => s.Timestamp >= hourAgo)
+            .OrderByDescending(s => s.Timestamp)
+            .ToListAsync();
+
+        if (!recentData.Any())
+        {
+            _liveCpuData.Clear();
+            _liveFanData.Clear();
+            _livePowerData = null;
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        // Get latest data for live display
+        _liveCpuData = recentData.Where(d => d.SensorType == "Temperature")
+            .GroupBy(d => d.SensorName)
+            .Select(g => g.First())
+            .ToList();
+
+        _liveFanData = recentData.Where(d => d.SensorType == "Fan" && d.SensorName != "Fan Redundancy")
+            .GroupBy(d => d.SensorName)
+            .Select(g => g.First())
+            .ToList();
+
+        _livePowerData = recentData.FirstOrDefault(d => d.SensorName == "Pwr Consumption");
+
+        // Load statistical data only when needed (less frequent updates)
+        if (DateTime.Now - _lastDataUpdate > TimeSpan.FromMinutes(1))
+        {
+            await LoadStatistics();
+            _lastDataUpdate = DateTime.Now;
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task LoadStatistics()
     {
         await using var scope = ScopeFactory.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<DatabaseService>().Db;
@@ -217,41 +298,11 @@
         var weekAgo = now.AddDays(-7);
         var monthAgo = now.AddDays(-30);
 
-        var allDbData = await db.Queryable<SensorData>().Where(s => s.Timestamp >= monthAgo).OrderBy(s => s.Timestamp).ToListAsync();
-        
-        _allData = allDbData.Where(s => s.Timestamp >= dayAgo).ToList();
-
-        if (!_allData.Any())
-        {
-            _liveCpuData.Clear();
-            _liveFanData.Clear();
-            _livePowerData = null;
-            await InvokeAsync(StateHasChanged);
-            return;
-        }
-
-        var normalizedData = _allData
-            .GroupBy(d => d.Timestamp)
-            .SelectMany(g =>
-            {
-                var unifiedTimestamp = g.Key;
-                return g.Select(d =>
-                {
-                    d.Timestamp = unifiedTimestamp;
-                    return d;
-                });
-            })
-            .ToList();
-
-        _allData = normalizedData;
-
-        _liveCpuData = _allData.Where(d => d.SensorType == "Temperature")
-            .GroupBy(d => d.SensorName).Select(g => g.LastOrDefault()).OfType<SensorData>().ToList();
-
-        _liveFanData = _allData.Where(d => d.SensorType == "Fan" && d.SensorName != "Fan Redundancy")
-            .GroupBy(d => d.SensorName).Select(g => g.LastOrDefault()).OfType<SensorData>().ToList();
-
-        _livePowerData = _allData.LastOrDefault(d => d.SensorName == "Pwr Consumption");
+        // Load statistics data with optimized queries
+        var allDbData = await db.Queryable<SensorData>()
+            .Where(s => s.Timestamp >= monthAgo)
+            .OrderBy(s => s.Timestamp)
+            .ToListAsync();
         
         // Calculate averages
         var tempSensors = allDbData.Where(d => d.SensorType == "Temperature").GroupBy(d => d.SensorName);
@@ -294,8 +345,107 @@
                 group.DefaultIfEmpty().Max(d => d?.Reading ?? 0)
             );
         }
+    }
 
-        await InvokeAsync(StateHasChanged);
+    private async Task LoadChartData()
+    {
+        // Check cache first
+        if (_chartDataCache.ContainsKey(_selectedTimeRange))
+        {
+            _chartData = _chartDataCache[_selectedTimeRange];
+            await UpdateCharts();
+            return;
+        }
+
+        await using var scope = ScopeFactory.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<DatabaseService>().Db;
+
+        var now = DateTime.Now;
+        var startTime = now.AddHours(-_selectedTimeRange);
+
+        // Load chart data with sampling for performance
+        var chartDataQuery = db.Queryable<SensorData>()
+            .Where(s => s.Timestamp >= startTime)
+            .OrderBy(s => s.Timestamp);
+
+        var rawData = await chartDataQuery.ToListAsync();
+
+        // Normalize timestamps and sample data properly
+        _chartData = NormalizeAndSampleData(rawData, MaxDataPoints);
+
+        // Cache the result
+        _chartDataCache[_selectedTimeRange] = _chartData;
+
+        await UpdateCharts();
+    }
+
+    private List<SensorData> NormalizeAndSampleData(List<SensorData> data, int maxPoints)
+    {
+        if (data.Count <= maxPoints)
+        {
+            // Still normalize timestamps even for small datasets
+            return NormalizeTimestamps(data);
+        }
+
+        // Group by timestamp to get all sensors at each time point
+        var timeGroups = data.GroupBy(d => d.Timestamp).OrderBy(g => g.Key).ToList();
+        
+        if (timeGroups.Count <= maxPoints)
+        {
+            // Flatten and normalize
+            return NormalizeTimestamps(timeGroups.SelectMany(g => g).ToList());
+        }
+
+        // Sample time points, not individual records
+        var step = timeGroups.Count / maxPoints;
+        var sampledGroups = new List<IGrouping<DateTime, SensorData>>();
+
+        for (int i = 0; i < timeGroups.Count; i += step)
+        {
+            sampledGroups.Add(timeGroups[i]);
+        }
+
+        // Always include the last time group
+        if (sampledGroups.LastOrDefault()?.Key != timeGroups.LastOrDefault()?.Key)
+        {
+            sampledGroups.Add(timeGroups.Last());
+        }
+
+        // Flatten the sampled groups and normalize timestamps
+        var sampledData = sampledGroups.SelectMany(g => g).ToList();
+        return NormalizeTimestamps(sampledData);
+    }
+
+    private List<SensorData> NormalizeTimestamps(List<SensorData> data)
+    {
+        // Group by timestamp and normalize to ensure all sensors have the same timestamp
+        var normalizedData = data
+            .GroupBy(d => d.Timestamp)
+            .SelectMany(g =>
+            {
+                var unifiedTimestamp = g.Key;
+                return g.Select(d =>
+                {
+                    // Create a new object to avoid modifying the original
+                    return new SensorData
+                    {
+                        Id = d.Id,
+                        SensorName = d.SensorName,
+                        SensorType = d.SensorType,
+                        Reading = d.Reading,
+                        Pwm = d.Pwm,
+                        Timestamp = unifiedTimestamp
+                    };
+                });
+            })
+            .OrderBy(d => d.Timestamp)
+            .ToList();
+
+        return normalizedData;
+    }
+
+    private async Task UpdateCharts()
+    {
         if (_temperatureChart != null) await _temperatureChart.UpdateSeriesAsync();
         if (_fanChart != null) await _fanChart.UpdateSeriesAsync();
         if (_powerChart != null) await _powerChart.UpdateSeriesAsync();
@@ -308,36 +458,112 @@
         _temperatureChartOptions = new ApexChartOptions<SensorData>
         {
             Theme = new Theme { Mode = theme },
-            Chart = new Chart { Zoom = new Zoom { Enabled = true }, Type = ApexCharts.ChartType.Line },
-            Xaxis = new XAxis { Type = XAxisType.Datetime },
+            Chart = new Chart { 
+                Zoom = new Zoom { Enabled = true }, 
+                Type = ApexCharts.ChartType.Line,
+                Animations = new Animations { Enabled = false } // Disable animations for better performance
+            },
+            Xaxis = new XAxis { 
+                Type = XAxisType.Datetime,
+                Position = XAxisPosition.Bottom,
+                Labels = new XAxisLabels { 
+                    RotateAlways = false,
+                    Rotate = -45,
+                    Style = new AxisLabelStyle { FontSize = "12px" },
+                    OffsetY = 0 // Ensure labels are below the axis
+                },
+                AxisBorder = new AxisBorder { Show = true },
+                AxisTicks = new AxisTicks { Show = true }
+            },
             Yaxis = [new YAxis { Title = new AxisTitle { Text = "°C" } }],
-            Tooltip = new Tooltip { Shared = true, Intersect = false, FollowCursor = true, X = new TooltipX { Show = true } },
+            Tooltip = new Tooltip { 
+                Shared = true, 
+                Intersect = false, 
+                FollowCursor = false,
+                X = new TooltipX { Show = true, Format = "dd MMM yyyy HH:mm" },
+                Y = new TooltipY { 
+                    Formatter = "function(val, opts) { return val.toFixed(1) + ' °C'; }"
+                }
+            },
             Stroke = new Stroke { Curve = Curve.Smooth, Width = 2 },
-            Markers = new Markers { Size = 3, Hover = new MarkersHover { Size = 6 } },
-            DataLabels = new DataLabels { Enabled = false }
+            Markers = new Markers { Size = 0 }, // Remove markers for better performance
+            DataLabels = new DataLabels { Enabled = false },
+            Legend = new Legend { Show = true, Position = LegendPosition.Bottom },
+            Grid = new Grid { Show = true }
         };
 
         _fanChartOptions = new ApexChartOptions<SensorData>
         {
             Theme = new Theme { Mode = theme },
-            Chart = new Chart { Zoom = new Zoom { Enabled = true }, Type = ApexCharts.ChartType.Line },
-            Xaxis = new XAxis { Type = XAxisType.Datetime },
+            Chart = new Chart { 
+                Zoom = new Zoom { Enabled = true }, 
+                Type = ApexCharts.ChartType.Line,
+                Animations = new Animations { Enabled = false }
+            },
+            Xaxis = new XAxis { 
+                Type = XAxisType.Datetime,
+                Position = XAxisPosition.Bottom,
+                Labels = new XAxisLabels { 
+                    RotateAlways = false,
+                    Rotate = -45,
+                    Style = new AxisLabelStyle { FontSize = "12px" },
+                    OffsetY = 0 // Ensure labels are below the axis
+                },
+                AxisBorder = new AxisBorder { Show = true },
+                AxisTicks = new AxisTicks { Show = true }
+            },
             Yaxis = [new YAxis { Title = new AxisTitle { Text = "RPM" } }],
-            Tooltip = new Tooltip { Shared = true },
+            Tooltip = new Tooltip { 
+                Shared = true, 
+                Intersect = false, 
+                FollowCursor = false,
+                X = new TooltipX { Show = true, Format = "dd MMM yyyy HH:mm" },
+                Y = new TooltipY { 
+                    Formatter = "function(val, opts) { return val.toFixed(0) + ' RPM'; }"
+                }
+            },
             Stroke = new Stroke { Curve = Curve.Smooth, Width = 2 },
-            Markers = new Markers { Size = 3, Hover = new MarkersHover { Size = 6 } },
-            DataLabels = new DataLabels { Enabled = false }
+            Markers = new Markers { Size = 0 },
+            DataLabels = new DataLabels { Enabled = false },
+            Legend = new Legend { Show = true, Position = LegendPosition.Bottom },
+            Grid = new Grid { Show = true }
         };
         
         _powerChartOptions = new ApexChartOptions<SensorData>
         {
             Theme = new Theme { Mode = theme },
-            Chart = new Chart { Zoom = new Zoom { Enabled = true }, Type = ApexCharts.ChartType.Area },
-            Xaxis = new XAxis { Type = XAxisType.Datetime },
+            Chart = new Chart { 
+                Zoom = new Zoom { Enabled = true }, 
+                Type = ApexCharts.ChartType.Area,
+                Animations = new Animations { Enabled = false }
+            },
+            Xaxis = new XAxis { 
+                Type = XAxisType.Datetime,
+                Position = XAxisPosition.Bottom,
+                Labels = new XAxisLabels { 
+                    RotateAlways = false,
+                    Rotate = -45,
+                    Style = new AxisLabelStyle { FontSize = "12px" },
+                    OffsetY = 0 // Ensure labels are below the axis
+                },
+                AxisBorder = new AxisBorder { Show = true },
+                AxisTicks = new AxisTicks { Show = true }
+            },
             Yaxis = [new YAxis { Title = new AxisTitle { Text = "Watts" } }],
+            Tooltip = new Tooltip { 
+                Shared = true, 
+                Intersect = false, 
+                FollowCursor = false,
+                X = new TooltipX { Show = true, Format = "dd MMM yyyy HH:mm" },
+                Y = new TooltipY { 
+                    Formatter = "function(val, opts) { return val.toFixed(1) + ' W'; }"
+                }
+            },
             Stroke = new Stroke { Curve = Curve.Smooth, Width = 2 },
             Markers = new Markers { Size = 0 },
             DataLabels = new DataLabels { Enabled = false },
+            Legend = new Legend { Show = true, Position = LegendPosition.Bottom },
+            Grid = new Grid { Show = true },
             Fill = new Fill
             {
                 Type = FillType.Gradient,
@@ -357,6 +583,6 @@
         _timer?.Dispose();
         ThemeService.OnThemeChanged -= OnThemeChanged;
         LocalizationService.OnLanguageChanged -= StateHasChanged;
+        _chartDataCache.Clear();
     }
-
-} 
+}
