@@ -138,10 +138,11 @@
             <MudText Typo="Typo.h6">Historical Data</MudText>
             <MudSelect T="int" Value="_selectedTimeRange" ValueChanged="OnTimeRangeChanged" 
                       Label="Chart Time Range" Variant="Variant.Outlined" Margin="Margin.Dense">
-                <MudSelectItem Value="1">Last 1 Hour</MudSelectItem>
-                <MudSelectItem Value="6">Last 6 Hours</MudSelectItem>
-                <MudSelectItem Value="24">Last 24 Hours</MudSelectItem>
-                <MudSelectItem Value="168">Last 7 Days</MudSelectItem>
+                <MudSelectItem Value="1">@string.Format(Localization.LastHours, 1)</MudSelectItem>
+                <MudSelectItem Value="6">@string.Format(Localization.LastHours, 6)</MudSelectItem>
+                <MudSelectItem Value="24">@string.Format(Localization.LastHours, 24)</MudSelectItem>
+                <MudSelectItem Value="168">@string.Format(Localization.LastDays, 7)</MudSelectItem>
+                <MudSelectItem Value="720">@string.Format(Localization.LastDays, 30)</MudSelectItem>
             </MudSelect>
         </MudStack>
     </MudItem>

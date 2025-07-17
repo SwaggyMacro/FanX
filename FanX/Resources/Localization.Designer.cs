@@ -807,7 +807,7 @@ namespace FanX.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Fan Speed History (Last Hour).
+        ///   Looks up a localized string similar to Fan Speed History.
         /// </summary>
         internal static string FanSpeedHistory {
             get {
@@ -983,6 +983,24 @@ namespace FanX.Resources {
         internal static string Language {
             get {
                 return ResourceManager.GetString("Language", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Last {0} Days.
+        /// </summary>
+        internal static string LastDays {
+            get {
+                return ResourceManager.GetString("LastDays", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Last {0} Hours.
+        /// </summary>
+        internal static string LastHours {
+            get {
+                return ResourceManager.GetString("LastHours", resourceCulture);
             }
         }
         
@@ -1302,7 +1320,7 @@ namespace FanX.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Power History (Last Hour).
+        ///   Looks up a localized string similar to Power History.
         /// </summary>
         internal static string PowerHistory {
             get {
@@ -1941,7 +1959,7 @@ namespace FanX.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Temperature History (Last Hour).
+        ///   Looks up a localized string similar to Temperature History.
         /// </summary>
         internal static string TemperatureHistory {
             get {

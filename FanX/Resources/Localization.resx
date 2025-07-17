@@ -363,15 +363,15 @@
     <comment>Fans card header</comment>
   </data>
   <data name="TemperatureHistory" xml:space="preserve">
-    <value>Temperature History (Last Hour)</value>
+    <value>Temperature History</value>
     <comment>Temperature history chart title</comment>
   </data>
   <data name="PowerHistory" xml:space="preserve">
-    <value>Power History (Last Hour)</value>
+    <value>Power History</value>
     <comment>Power history chart title</comment>
   </data>
   <data name="FanSpeedHistory" xml:space="preserve">
-    <value>Fan Speed History (Last Hour)</value>
+    <value>Fan Speed History</value>
     <comment>Fan speed history chart title</comment>
   </data>
   <data name="FanControlSettings" xml:space="preserve">
@@ -884,5 +884,11 @@
   </data>
   <data name="RedirectingToLogin" xml:space="preserve">
     <value>Redirecting to login...</value>
+  </data>
+  <data name="LastHours" xml:space="preserve">
+    <value>Last {0} Hours</value>
+  </data>
+  <data name="LastDays" xml:space="preserve">
+    <value>Last {0} Days</value>
   </data>
 </root>

@@ -531,7 +531,7 @@
     <value>功耗</value>
   </data>
   <data name="PowerHistory" xml:space="preserve">
-    <value>历史功耗(一小时前)</value>
+    <value>历史功耗</value>
   </data>
   <data name="Rule" xml:space="preserve">
     <value>规则</value>
@@ -543,13 +543,13 @@
     <value>温度</value>
   </data>
   <data name="TemperatureHistory" xml:space="preserve">
-    <value>温度历史(一小时前)</value>
+    <value>温度历史</value>
   </data>
   <data name="Fans" xml:space="preserve">
     <value>风扇</value>
   </data>
   <data name="FanSpeedHistory" xml:space="preserve">
-    <value>风扇转速历史(一小时前)</value>
+    <value>风扇转速历史</value>
   </data>
   <data name="Disabled" xml:space="preserve">
     <value>已禁用</value>
@@ -856,5 +856,11 @@
   </data>
   <data name="RedirectingToLogin" xml:space="preserve">
     <value>正在跳转至登录页面...</value>
+  </data>
+  <data name="LastHours" xml:space="preserve">
+    <value>{0} 小时前</value>
+  </data>
+  <data name="LastDays" xml:space="preserve">
+    <value>{0} 天前</value>
   </data>
 </root>
