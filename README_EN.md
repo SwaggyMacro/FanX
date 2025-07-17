@@ -136,6 +136,8 @@ For example, you can set an intelligent rule as shown in the screenshot, which a
 ## Tested Devices
 - Dell PowerEdge R720xd
 
+Theoretically compatible with any BMC that supports IPMI. Like T640, R510, R720, R720xd, R730, R730xd, R740, R740xd, etc.
+
 ## Contribution & Feedback
 
 Feel free to open an Issue or Pull Request, or join the discussion on the project page!

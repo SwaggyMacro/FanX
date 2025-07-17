@@ -142,6 +142,8 @@ docker run -d --name fanx -p 5136:5136 -v /docker/FanX/data:/app/data -v /docker
 ## 已测试设备
 - Dell PowerEdge R720xd
 
+理论上支持BMC的服务器都可以使用，如 T640, R510, R720, R720xd, R730, R730xd, R740, R740xd 等。
+
 ## 贡献与反馈
 
 欢迎提 Issue 或 Pull Request，或在项目主页上讨论交流！
