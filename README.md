@@ -76,6 +76,13 @@ FanX 是一款基于 .NET 8 和 Blazor 的风扇控制与监控平台，能够�
     - 默认管理员账号：
       - 账号：`admin`
       - 密码：`admin123`
+
+### Docker 部署
+你可以使用项目中提供的 [docker-compose.yml](docker-compose.yml) 文件进行 Docker 部署，这样可以在容器化环境中运行 FanX，所有依赖都将自动管理。
+或者你也可以直接使用 Docker 命令部署：
+```bash
+docker run -d --name fanx -p 5136:5136 -v /docker/FanX/data:/app/data -v /docker/FanX/logs:/app/logs realswaggymacro/fanx:latest
+```
    
 ### 克隆并运行
 1. 克隆仓库：
@@ -108,6 +115,7 @@ FanX 是一款基于 .NET 8 和 Blazor 的风扇控制与监控平台，能够�
 - 在 `/fan-control` 页面定义自定义或智能风扇控制规则。
 - 在 `/notifications` 页面配置通知渠道和规则，包括企业微信机器人、Webhook、Telegram 机器人、邮箱等。
 - 在 `/settings` 页面设置日志保留天数、传感器数据保留策略等。(默认30天)
+> 如果你需要手动调控风扇，可以在 `/fan-control` 页面设置为手动控制，然后前往 `/debug` 页面手动调节风扇转速，支持单个风扇手动调节。
 
 ## 配置说明
 
@@ -115,6 +123,21 @@ FanX 是一款基于 .NET 8 和 Blazor 的风扇控制与监控平台，能够�
 - `/fan-control` 页面：定义自定义或智能风扇控制规则
 - `/notifications` 页面：配置通知渠道和规则，包括企业微信机器人、Webhook、Telegram 机器人、邮箱等
 - `/settings` 页面：设置日志保留天数、传感器数据保留策略等
+
+
+## 玩法
+
+比如你可以设置一个智能规则，规则如下图，可实现内容：
+- CPU1 > 80度 给 123号风扇 80% 转速, CPU2 > 80度 给 456号风扇 80% 转速
+- CPU1 > 70度 给 123号风扇 50% 转速, CPU2 > 70度 给 456号风扇 50% 转速
+- CPU1 > 60度 给 123号风扇 30% 转速, CPU2 > 60度 给 456号风扇 30% 转速
+- CPU1 > 50度 给 123号风扇 20% 转速, CPU2 > 50度 给 456号风扇 15% 转速
+  - 因为我这 CPU1 温度会比 CPU2 高，所以我设置了在 CPU1 侧的123号风扇转速更高
+- CPU1 < 50度 给 123号风扇 10% 转速, CPU2 < 50度 给 456号风扇 10% 转速
+
+> 同时你也可以根据进风口温度和出风口温度来设置风扇转速，或者根据功率来设置风扇转速。
+
+![玩法示例](Screenshot/screenshot_smart_rule_example.png)
 
 ## 已测试设备
 - Dell PowerEdge R720xd

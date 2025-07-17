@@ -79,6 +79,13 @@ FanX is a fan control and monitoring platform built with .NET 8 and Blazor. It p
      - Username: `admin`
      - Password: `admin123`
 
+### Docker Deployment
+For Docker deployment, you can use the provided [docker-compose.yml](docker-compose.yml) file. This allows you to run FanX in a containerized environment with all dependencies managed automatically.
+Or you can run it directly using Docker:
+```bash
+docker run -d --name fanx -p 5136:5136 -v /docker/FanX/data:/app/data -v /docker/FanX/logs:/app/logs realswaggymacro/fanx:latest
+```
+
 ### Clone and Run
 1. Clone the repository:
    ```bash
@@ -103,12 +110,28 @@ FanX is a fan control and monitoring platform built with .NET 8 and Blazor. It p
 - Set up notification channels and rules on the `/notifications` page.
 - Adjust log retention days and sensor data policies on the `/settings` page (default is 30 days).
 
+> If you need to manually control fans, you can set it to manual mode on the `/fan-control` page, then go to the `/debug` page to adjust fan speeds individually.
+
 ## Pages & Configuration
 
 - `/ipmi-config`: Configure BMC(iDrac) endpoint, credentials
 - `/fan-control`: Define custom or intelligent fan control rules
 - `/notifications`: Configure notification channels and rules (WeChat, Webhook, Telegram, Email)
 - `/settings`: Adjust log retention days and sensor data policies
+
+## Example Usage
+
+For example, you can set an intelligent rule as shown in the screenshot, which achieves the following:
+- When CPU1 > 80°C, set Fan 123 to 80% speed, and when CPU2 > 80°C, set Fan 456 to 80% speed
+- When CPU1 > 70°C, set Fan 123 to 50% speed, and when CPU2 > 70°C, set Fan 456 to 50% speed
+- When CPU1 > 60°C, set Fan 123 to 30% speed, and when CPU2 > 60°C, set Fan 456 to 30% speed
+- When CPU1 > 50°C, set Fan 123 to 20% speed, and when CPU2 > 50°C, set Fan 456 to 15% speed
+    - Since CPU1 temperature is usually higher than CPU2, I set the speed of Fan 123 on the CPU1 side to be higher
+- When CPU1 < 50°C, set Fan 123 to 10% speed, and when CPU2 < 50°C, set Fan 456 to 10% speed
+
+> You can also set fan speeds based on inlet and outlet temperatures, or based on power consumption.
+![Example Rule](Screenshot/screenshot_smart_rule_example.png)
+
 
 ## Tested Devices
 - Dell PowerEdge R720xd
