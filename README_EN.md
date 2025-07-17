@@ -3,7 +3,7 @@
 
 跳转至: [中文说明](README.md)
 
-FanX is a fan control and monitoring platform built with .NET 8 and Blazor. Mainly designed for Dell servers (theoretically compatible with any BMC), It provides real-time insights into system power usage, fan speeds, CPU temperature, and motherboard inlet/outlet temperature. Custom and intelligent rules dynamically adjust fan speeds to keep your hardware in a safe range.
+FanX is a fan control and monitoring platform built with .NET 8 and Blazor. Mainly designed for Dell servers (theoretically compatible with any BMC), It provides real-time insights into system power usage, fan speeds, CPU temperature, and motherboard inlet/outlet temperature. Custom and intelligent rules dynamically adjust fan speeds to keep your hardware in a safe range while reducing noise levels.
 
 ## Key Features
 
