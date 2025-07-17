@@ -83,7 +83,14 @@ FanX is a fan control and monitoring platform built with .NET 8 and Blazor. Main
 For Docker deployment, you can use the provided [docker-compose.yml](docker-compose.yml) file. This allows you to run FanX in a containerized environment with all dependencies managed automatically.
 Or you can run it directly using Docker:
 ```bash
-docker run -d --name fanx -p 5136:5136 -v /docker/FanX/data:/app/data -v /docker/FanX/logs:/app/logs realswaggymacro/fanx:latest
+docker run -d \
+  --name fanx \
+  -p 5136:5136 \
+  -v /docker/fanx/data:/app/data \
+  -v /docker/fanx/logs:/app/logs \
+  -v /etc/timezone:/etc/timezone:ro \
+  -v /etc/localtime:/etc/localtime:ro \
+  realswaggymacro/fanx:latest
 ```
 
 ### Clone and Run

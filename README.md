@@ -81,7 +81,14 @@ FanX 是一款基于 .NET 8 和 Blazor 的风扇控制与监控平台，主要�
 你可以使用项目中提供的 [docker-compose.yml](docker-compose.yml) 文件进行 Docker 部署，这样可以在容器化环境中运行 FanX，所有依赖都将自动管理。
 或者你也可以直接使用 Docker 命令部署：
 ```bash
-docker run -d --name fanx -p 5136:5136 -v /docker/FanX/data:/app/data -v /docker/FanX/logs:/app/logs realswaggymacro/fanx:latest
+docker run -d \
+  --name fanx \
+  -p 5136:5136 \
+  -v /docker/fanx/data:/app/data \
+  -v /docker/fanx/logs:/app/logs \
+  -v /etc/timezone:/etc/timezone:ro \
+  -v /etc/localtime:/etc/localtime:ro \
+  realswaggymacro/fanx:latest
 ```
    
 ### 克隆并运行
