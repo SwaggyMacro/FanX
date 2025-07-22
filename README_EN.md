@@ -3,7 +3,9 @@
 
 跳转至: [中文说明](README.md)
 
-FanX is a fan control and monitoring platform built with .NET 8 and Blazor. Mainly designed for Dell servers (theoretically compatible with any BMC), It provides real-time insights into system power usage, fan speeds, CPU temperature, and motherboard inlet/outlet temperature. Custom and intelligent rules dynamically adjust fan speeds to keep your hardware in a safe range while reducing noise levels.
+FanX is a fan control and monitoring platform built with .NET 8 and Blazor. Mainly designed for Dell servers (theoretically compatible with any BMC), It provides real-time insights into system power usage, fan speeds, CPU temperature, and motherboard inlet/outlet temperature. Custom and intelligent rules dynamically adjust fan speeds to keep your hardware in a safe range while reducing noise levels.  
+
+**Manual fan speed control is no longer supported in iDrac versions above `3.30.30.30`. The only way to restore it is to downgrade the iDrac firmware, which carries its own risks.**
 
 ## Key Features
 
