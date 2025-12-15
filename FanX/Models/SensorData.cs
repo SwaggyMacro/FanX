@@ -3,6 +3,8 @@ using SqlSugar;
 namespace FanX.Models
 {
     [SugarTable("SensorData")]
+    [SugarIndex("idx_sensordata_timestamp", nameof(Timestamp), OrderByType.Desc)]
+    [SugarIndex("idx_sensordata_sensorname_timestamp", nameof(SensorName), OrderByType.Asc, nameof(Timestamp), OrderByType.Desc)]
     public class SensorData
     {
         [SugarColumn(IsPrimaryKey = true, IsIdentity = true)]

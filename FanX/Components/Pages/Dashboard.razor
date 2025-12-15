@@ -299,61 +299,79 @@
         var weekAgo = now.AddDays(-7);
         var monthAgo = now.AddDays(-30);
 
-        // Load statistics data with optimized queries
-        var allDbData = await db.Queryable<SensorData>()
-            .Where(s => s.Timestamp >= monthAgo)
-            .OrderBy(s => s.Timestamp)
+        // Use database-level aggregation instead of loading all data into memory
+        // Get distinct sensor names first
+        var tempSensorNames = await db.Queryable<SensorData>()
+            .Where(s => s.SensorType == "Temperature" && s.Timestamp >= monthAgo)
+            .Select(s => s.SensorName)
+            .Distinct()
             .ToListAsync();
-        
-        // Calculate averages
-        var tempSensors = allDbData.Where(d => d.SensorType == "Temperature").GroupBy(d => d.SensorName);
-        foreach (var group in tempSensors)
+
+        foreach (var sensorName in tempSensorNames.Where(n => n != null))
         {
-            if (group.Key != null)
-            _tempAverages[group.Key] = (
-                group.Where(d => d.Timestamp >= hourAgo).DefaultIfEmpty().Average(d => d?.Reading ?? 0),
-                group.Where(d => d.Timestamp >= dayAgo).DefaultIfEmpty().Average(d => d?.Reading ?? 0),
-                group.Where(d => d.Timestamp >= weekAgo).DefaultIfEmpty().Average(d => d?.Reading ?? 0),
-                group.DefaultIfEmpty().Average(d => d?.Reading ?? 0),
-                group.DefaultIfEmpty().Min(d => d?.Reading ?? 0),
-                group.DefaultIfEmpty().Max(d => d?.Reading ?? 0)
-            );
+            var stats = await CalculateSensorStats(db, sensorName!, hourAgo, dayAgo, weekAgo, monthAgo);
+            _tempAverages[sensorName!] = stats;
         }
 
-        var powerData = allDbData.Where(d => d.SensorName == "Pwr Consumption").ToList();
-        if (powerData.Any())
+        // Power statistics
+        var powerStats = await CalculateSensorStats(db, "Pwr Consumption", hourAgo, dayAgo, weekAgo, monthAgo);
+        _powerAverages = powerStats;
+
+        // Fan statistics
+        var fanSensorNames = await db.Queryable<SensorData>()
+            .Where(s => s.SensorType == "Fan" && s.Timestamp >= monthAgo)
+            .Select(s => s.SensorName)
+            .Distinct()
+            .ToListAsync();
+
+        foreach (var sensorName in fanSensorNames.Where(n => n != null))
         {
-            _powerAverages = (
-                powerData.Where(d => d.Timestamp >= hourAgo).DefaultIfEmpty().Average(d => d?.Reading ?? 0),
-                powerData.Where(d => d.Timestamp >= dayAgo).DefaultIfEmpty().Average(d => d?.Reading ?? 0),
-                powerData.Where(d => d.Timestamp >= weekAgo).DefaultIfEmpty().Average(d => d?.Reading ?? 0),
-                powerData.DefaultIfEmpty().Average(d => d?.Reading ?? 0),
-                powerData.DefaultIfEmpty().Min(d => d?.Reading ?? 0),
-                powerData.DefaultIfEmpty().Max(d => d?.Reading ?? 0)
-            );
+            var stats = await CalculateSensorStats(db, sensorName!, hourAgo, dayAgo, weekAgo, monthAgo);
+            _fanAverages[sensorName!] = stats;
         }
-        
-        var fanSensors = allDbData.Where(d => d.SensorType == "Fan").GroupBy(d => d.SensorName);
-        foreach (var group in fanSensors)
-        {
-            if (group.Key != null)
-            _fanAverages[group.Key] = (
-                group.Where(d => d.Timestamp >= hourAgo).DefaultIfEmpty().Average(d => d?.Reading ?? 0),
-                group.Where(d => d.Timestamp >= dayAgo).DefaultIfEmpty().Average(d => d?.Reading ?? 0),
-                group.Where(d => d.Timestamp >= weekAgo).DefaultIfEmpty().Average(d => d?.Reading ?? 0),
-                group.DefaultIfEmpty().Average(d => d?.Reading ?? 0),
-                group.DefaultIfEmpty().Min(d => d?.Reading ?? 0),
-                group.DefaultIfEmpty().Max(d => d?.Reading ?? 0)
-            );
-        }
+    }
+
+    private async Task<(double Hour, double Day, double Week, double Month, double Min, double Max)> CalculateSensorStats(
+        SqlSugar.SqlSugarScope db, string sensorName, DateTime hourAgo, DateTime dayAgo, DateTime weekAgo, DateTime monthAgo)
+    {
+        // Use database aggregation - much faster than loading all data
+        var monthStats = await db.Queryable<SensorData>()
+            .Where(s => s.SensorName == sensorName && s.Timestamp >= monthAgo)
+            .Select(s => new { 
+                Avg = SqlSugar.SqlFunc.AggregateAvg(s.Reading),
+                Min = SqlSugar.SqlFunc.AggregateMin(s.Reading),
+                Max = SqlSugar.SqlFunc.AggregateMax(s.Reading)
+            })
+            .FirstAsync();
+
+        var weekAvg = await db.Queryable<SensorData>()
+            .Where(s => s.SensorName == sensorName && s.Timestamp >= weekAgo)
+            .AvgAsync(s => s.Reading);
+
+        var dayAvg = await db.Queryable<SensorData>()
+            .Where(s => s.SensorName == sensorName && s.Timestamp >= dayAgo)
+            .AvgAsync(s => s.Reading);
+
+        var hourAvg = await db.Queryable<SensorData>()
+            .Where(s => s.SensorName == sensorName && s.Timestamp >= hourAgo)
+            .AvgAsync(s => s.Reading);
+
+        return (
+            hourAvg,
+            dayAvg,
+            weekAvg,
+            monthStats?.Avg ?? 0,
+            monthStats?.Min ?? 0,
+            monthStats?.Max ?? 0
+        );
     }
 
     private async Task LoadChartData()
     {
         // Check cache first
-        if (_chartDataCache.ContainsKey(_selectedTimeRange))
+        if (_chartDataCache.TryGetValue(_selectedTimeRange, out var cachedData))
         {
-            _chartData = _chartDataCache[_selectedTimeRange];
+            _chartData = cachedData;
             await UpdateCharts();
             return;
         }
@@ -364,14 +382,61 @@
         var now = DateTime.Now;
         var startTime = now.AddHours(-_selectedTimeRange);
 
-        // Load chart data with sampling for performance
-        var chartDataQuery = db.Queryable<SensorData>()
+        // Get total count first to determine sampling strategy
+        var totalCount = await db.Queryable<SensorData>()
             .Where(s => s.Timestamp >= startTime)
-            .OrderBy(s => s.Timestamp);
+            .CountAsync();
 
-        var rawData = await chartDataQuery.ToListAsync();
+        List<SensorData> rawData;
+        
+        if (totalCount <= MaxDataPoints * 10) // If data is manageable, load directly
+        {
+            rawData = await db.Queryable<SensorData>()
+                .Where(s => s.Timestamp >= startTime)
+                .OrderBy(s => s.Timestamp)
+                .ToListAsync();
+        }
+        else
+        {
+            // Use database-level sampling for large datasets
+            // Calculate sampling interval based on time range
+            var intervalMinutes = _selectedTimeRange switch
+            {
+                1 => 1,      // 1 hour: every minute
+                6 => 2,      // 6 hours: every 2 minutes
+                24 => 5,     // 24 hours: every 5 minutes
+                168 => 30,   // 7 days: every 30 minutes
+                720 => 120,  // 30 days: every 2 hours
+                _ => 5
+            };
 
-        // Normalize timestamps and sample data properly
+            // Get distinct timestamps at intervals, then fetch data for those timestamps
+            var sampledTimestamps = await db.Queryable<SensorData>()
+                .Where(s => s.Timestamp >= startTime)
+                .GroupBy(s => new { 
+                    Year = s.Timestamp.Year,
+                    Month = s.Timestamp.Month,
+                    Day = s.Timestamp.Day,
+                    Hour = s.Timestamp.Hour,
+                    MinuteGroup = s.Timestamp.Minute / intervalMinutes
+                })
+                .Select(g => SqlSugar.SqlFunc.AggregateMin(g.Timestamp))
+                .ToListAsync();
+
+            if (sampledTimestamps.Any())
+            {
+                rawData = await db.Queryable<SensorData>()
+                    .Where(s => sampledTimestamps.Contains(s.Timestamp))
+                    .OrderBy(s => s.Timestamp)
+                    .ToListAsync();
+            }
+            else
+            {
+                rawData = new List<SensorData>();
+            }
+        }
+
+        // Normalize timestamps and sample data if still too large
         _chartData = NormalizeAndSampleData(rawData, MaxDataPoints);
 
         // Cache the result

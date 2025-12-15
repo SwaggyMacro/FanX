@@ -9,6 +9,7 @@ namespace FanX.Services
         private Timer? _timer;
         private DateTime _lastLogCleanup = DateTime.MinValue;
         private DateTime _lastSensorCleanup = DateTime.MinValue;
+        private const int DefaultSensorRetentionDays = 30; // Default: keep 30 days of data
 
         public MaintenanceService(IServiceProvider serviceProvider)
         {
@@ -17,8 +18,8 @@ namespace FanX.Services
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            // Run every second to support debug intervals
-            _timer = new Timer(async void (_) => await DoWork(), null, TimeSpan.Zero, TimeSpan.FromSeconds(1));
+            // Run every hour for maintenance tasks (no need to run every second)
+            _timer = new Timer(async void (_) => await DoWork(), null, TimeSpan.FromMinutes(1), TimeSpan.FromHours(1));
             return Task.CompletedTask;
         }
 
@@ -28,53 +29,97 @@ namespace FanX.Services
             LoggerService.Debug($"MaintenanceService executing at {nowUtc} UTC.");
             if (!_initialized)
             {
-                // Skip cleanup on initial startup
                 _initialized = true;
                 _lastLogCleanup = nowUtc;
                 _lastSensorCleanup = nowUtc;
                 LoggerService.Debug("MaintenanceService initialization complete, skipping first cleanup.");
                 return;
             }
+            
             using var scope = _serviceProvider.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<DatabaseService>().Db;
             var settings = await db.Queryable<AppSetting>().ToListAsync();
 
-            // Periodic full log cleanup by days
-            if (settings.Any(s => s.Key == "LogRetentionDays") && int.TryParse(settings.First(s => s.Key == "LogRetentionDays").Value, out var days) && days > 0)
+            // Clean old logs daily
+            if (nowUtc - _lastLogCleanup >= TimeSpan.FromDays(1))
             {
-                if (nowUtc - _lastLogCleanup >= TimeSpan.FromDays(days))
+                var logRetentionDays = 7; // Default 7 days
+                if (settings.Any(s => s.Key == "LogRetentionDays") && 
+                    int.TryParse(settings.First(s => s.Key == "LogRetentionDays").Value, out var days) && days > 0)
                 {
-                    LoggerService.Info($"Clearing all logs (daily interval: {days} days)");
-                    ClearAllLogs();
-                    _lastLogCleanup = nowUtc;
+                    logRetentionDays = days;
                 }
+                LoggerService.Info($"Cleaning logs older than {logRetentionDays} days");
+                CleanOldLogs(logRetentionDays);
+                _lastLogCleanup = nowUtc;
             }
 
-            // Periodic full sensor data cleanup by days
-            if (settings.Any(s => s.Key == "SensorDataRetentionDays") && int.TryParse(settings.First(s => s.Key == "SensorDataRetentionDays").Value, out var sdDays) && sdDays > 0)
+            // Clean old sensor data daily - DELETE data older than retention period
+            if (nowUtc - _lastSensorCleanup >= TimeSpan.FromDays(1))
             {
-                if (nowUtc - _lastSensorCleanup >= TimeSpan.FromDays(sdDays))
+                var sensorRetentionDays = DefaultSensorRetentionDays;
+                if (settings.Any(s => s.Key == "SensorDataRetentionDays") && 
+                    int.TryParse(settings.First(s => s.Key == "SensorDataRetentionDays").Value, out var sdDays) && sdDays > 0)
                 {
-                    LoggerService.Info($"Clearing all sensor data (daily interval: {sdDays} days)");
-                    var deletedCount = await db.Deleteable<SensorData>().ExecuteCommandAsync();
-                    LoggerService.Info($"Deleted {deletedCount} sensor data entries (full clear).");
-                    _lastSensorCleanup = nowUtc;
+                    sensorRetentionDays = sdDays;
                 }
+                
+                var cutoffDate = DateTime.Now.AddDays(-sensorRetentionDays);
+                LoggerService.Info($"Cleaning sensor data older than {sensorRetentionDays} days (before {cutoffDate})");
+                
+                // Delete old data in batches to avoid locking the database
+                var deletedCount = await db.Deleteable<SensorData>()
+                    .Where(s => s.Timestamp < cutoffDate)
+                    .ExecuteCommandAsync();
+                    
+                if (deletedCount > 0)
+                {
+                    LoggerService.Info($"Deleted {deletedCount} old sensor data entries.");
+                    // Run VACUUM to reclaim space (SQLite specific)
+                    try
+                    {
+                        await db.Ado.ExecuteCommandAsync("VACUUM;");
+                        LoggerService.Info("Database vacuumed successfully.");
+                    }
+                    catch (Exception ex)
+                    {
+                        LoggerService.Warn($"Failed to vacuum database: {ex.Message}");
+                    }
+                }
+                
+                _lastSensorCleanup = nowUtc;
             }
         }
 
-        private void ClearAllLogs()
+        private void CleanOldLogs(int retentionDays)
         {
             var logDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs");
             if (!Directory.Exists(logDir)) return;
+            
+            var cutoffDate = DateTime.Now.AddDays(-retentionDays);
             var files = Directory.GetFiles(logDir, "*.log", SearchOption.AllDirectories);
+            var deletedCount = 0;
+            
             foreach (var file in files)
             {
-                try { File.Delete(file); }
+                try
+                {
+                    var fileInfo = new FileInfo(file);
+                    if (fileInfo.LastWriteTime < cutoffDate)
+                    {
+                        File.Delete(file);
+                        deletedCount++;
+                    }
+                }
                 catch
                 {
                     // ignored
                 }
+            }
+            
+            if (deletedCount > 0)
+            {
+                LoggerService.Info($"Deleted {deletedCount} old log files.");
             }
         }
 
