@@ -415,39 +415,39 @@
             // Load all sensor data from the past month in one query
             var allData = await db.Queryable<SensorData>()
                 .Where(s => s.Timestamp >= monthAgo && 
+                           s.SensorName != null &&
                            (s.SensorType == "Temperature" || 
                             s.SensorType == "Fan" || 
                             s.SensorName == "Pwr Consumption"))
                 .Select(s => new { s.SensorName, s.SensorType, s.Reading, s.Timestamp })
                 .ToListAsync();
 
-            // Group data by sensor name for efficient processing
-            var groupedData = allData.GroupBy(s => s.SensorName ?? "");
+            // Group data by sensor name and type for efficient processing
+            var groupedData = allData.GroupBy(s => new { s.SensorName, s.SensorType });
 
             foreach (var group in groupedData)
             {
-                var sensorName = group.Key;
+                var sensorName = group.Key.SensorName;
+                var sensorType = group.Key.SensorType;
                 if (string.IsNullOrEmpty(sensorName)) continue;
 
-                var sensorData = group.ToList();
+                // Convert to list once and pre-filter by time ranges
+                var allSensorData = group.OrderBy(s => s.Timestamp).ToList();
+                var hourData = allSensorData.Where(s => s.Timestamp >= hourAgo).ToList();
+                var dayData = allSensorData.Where(s => s.Timestamp >= dayAgo).ToList();
+                var weekData = allSensorData.Where(s => s.Timestamp >= weekAgo).ToList();
                 
-                // Calculate statistics for all time ranges in memory
-                var hourData = sensorData.Where(s => s.Timestamp >= hourAgo).ToList();
-                var dayData = sensorData.Where(s => s.Timestamp >= dayAgo).ToList();
-                var weekData = sensorData.Where(s => s.Timestamp >= weekAgo).ToList();
-                var monthData = sensorData; // Already filtered to month in main query
-
+                // Calculate statistics from pre-filtered data
                 var stats = (
                     Hour: hourData.Any() ? hourData.Average(s => s.Reading) : 0,
                     Day: dayData.Any() ? dayData.Average(s => s.Reading) : 0,
                     Week: weekData.Any() ? weekData.Average(s => s.Reading) : 0,
-                    Month: monthData.Any() ? monthData.Average(s => s.Reading) : 0,
-                    Min: monthData.Any() ? monthData.Min(s => s.Reading) : 0,
-                    Max: monthData.Any() ? monthData.Max(s => s.Reading) : 0
+                    Month: allSensorData.Any() ? allSensorData.Average(s => s.Reading) : 0,
+                    Min: allSensorData.Any() ? allSensorData.Min(s => s.Reading) : 0,
+                    Max: allSensorData.Any() ? allSensorData.Max(s => s.Reading) : 0
                 );
 
                 // Store in appropriate dictionary based on sensor type
-                var sensorType = sensorData.FirstOrDefault()?.SensorType;
                 if (sensorName == "Pwr Consumption")
                 {
                     _powerAverages = stats;
