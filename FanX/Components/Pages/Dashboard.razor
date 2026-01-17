@@ -412,64 +412,60 @@
             var weekAgo = now.AddDays(-7);
             var monthAgo = now.AddDays(-30);
 
-            var tempSensorNames = await db.Queryable<SensorData>()
-                .Where(s => s.SensorType == "Temperature" && s.Timestamp >= monthAgo)
-                .Select(s => s.SensorName)
-                .Distinct()
+            // Load all sensor data from the past month in one query
+            var allData = await db.Queryable<SensorData>()
+                .Where(s => s.Timestamp >= monthAgo && 
+                           (s.SensorType == "Temperature" || 
+                            s.SensorType == "Fan" || 
+                            s.SensorName == "Pwr Consumption"))
+                .Select(s => new { s.SensorName, s.SensorType, s.Reading, s.Timestamp })
                 .ToListAsync();
 
-            foreach (var sensorName in tempSensorNames.Where(n => n != null))
+            // Group data by sensor name for efficient processing
+            var groupedData = allData.GroupBy(s => s.SensorName ?? "");
+
+            foreach (var group in groupedData)
             {
-                var stats = await CalculateSensorStats(db, sensorName!, hourAgo, dayAgo, weekAgo, monthAgo);
-                _tempAverages[sensorName!] = stats;
-            }
+                var sensorName = group.Key;
+                if (string.IsNullOrEmpty(sensorName)) continue;
 
-            var powerStats = await CalculateSensorStats(db, "Pwr Consumption", hourAgo, dayAgo, weekAgo, monthAgo);
-            _powerAverages = powerStats;
+                var sensorData = group.ToList();
+                
+                // Calculate statistics for all time ranges in memory
+                var hourData = sensorData.Where(s => s.Timestamp >= hourAgo).ToList();
+                var dayData = sensorData.Where(s => s.Timestamp >= dayAgo).ToList();
+                var weekData = sensorData.Where(s => s.Timestamp >= weekAgo).ToList();
+                var monthData = sensorData; // Already filtered to month in main query
 
-            var fanSensorNames = await db.Queryable<SensorData>()
-                .Where(s => s.SensorType == "Fan" && s.Timestamp >= monthAgo)
-                .Select(s => s.SensorName)
-                .Distinct()
-                .ToListAsync();
+                var stats = (
+                    Hour: hourData.Any() ? hourData.Average(s => s.Reading) : 0,
+                    Day: dayData.Any() ? dayData.Average(s => s.Reading) : 0,
+                    Week: weekData.Any() ? weekData.Average(s => s.Reading) : 0,
+                    Month: monthData.Any() ? monthData.Average(s => s.Reading) : 0,
+                    Min: monthData.Any() ? monthData.Min(s => s.Reading) : 0,
+                    Max: monthData.Any() ? monthData.Max(s => s.Reading) : 0
+                );
 
-            foreach (var sensorName in fanSensorNames.Where(n => n != null))
-            {
-                var stats = await CalculateSensorStats(db, sensorName!, hourAgo, dayAgo, weekAgo, monthAgo);
-                _fanAverages[sensorName!] = stats;
+                // Store in appropriate dictionary based on sensor type
+                var sensorType = sensorData.FirstOrDefault()?.SensorType;
+                if (sensorName == "Pwr Consumption")
+                {
+                    _powerAverages = stats;
+                }
+                else if (sensorType == "Temperature")
+                {
+                    _tempAverages[sensorName] = stats;
+                }
+                else if (sensorType == "Fan")
+                {
+                    _fanAverages[sensorName] = stats;
+                }
             }
         }
         catch (Exception ex)
         {
             LoggerService.Error("Failed to load statistics", ex);
         }
-    }
-
-    private async Task<(double Hour, double Day, double Week, double Month, double Min, double Max)> CalculateSensorStats(
-        SqlSugar.SqlSugarScope db, string sensorName, DateTime hourAgo, DateTime dayAgo, DateTime weekAgo, DateTime monthAgo)
-    {
-        var monthStats = await db.Queryable<SensorData>()
-            .Where(s => s.SensorName == sensorName && s.Timestamp >= monthAgo)
-            .Select(s => new { 
-                Avg = SqlSugar.SqlFunc.AggregateAvg(s.Reading),
-                Min = SqlSugar.SqlFunc.AggregateMin(s.Reading),
-                Max = SqlSugar.SqlFunc.AggregateMax(s.Reading)
-            })
-            .FirstAsync();
-
-        var weekAvg = await db.Queryable<SensorData>()
-            .Where(s => s.SensorName == sensorName && s.Timestamp >= weekAgo)
-            .AvgAsync(s => s.Reading);
-
-        var dayAvg = await db.Queryable<SensorData>()
-            .Where(s => s.SensorName == sensorName && s.Timestamp >= dayAgo)
-            .AvgAsync(s => s.Reading);
-
-        var hourAvg = await db.Queryable<SensorData>()
-            .Where(s => s.SensorName == sensorName && s.Timestamp >= hourAgo)
-            .AvgAsync(s => s.Reading);
-
-        return (hourAvg, dayAvg, weekAvg, monthStats?.Avg ?? 0, monthStats?.Min ?? 0, monthStats?.Max ?? 0);
     }
 
     private async Task LoadChartData()
