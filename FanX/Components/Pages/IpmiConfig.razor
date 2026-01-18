@@ -101,16 +101,13 @@
             {
                 await HandleDeleteSuccessAsync();
             }
-            else
+            else if (dialogResult.Config != null)
             {
-                if (dialogResult.Config != null)
+                if (dialogResult.Config.IsEnabled)
                 {
-                    if (dialogResult.Config.IsEnabled)
-                    {
-                        await IpmiConfigService.SetActiveConfigAsync(dialogResult.Config.Id);
-                    }
-                    Snackbar.Add(LocalizationService.GetLocalizedString("ServerSavedSuccess"), Severity.Success);
+                    await IpmiConfigService.SetActiveConfigAsync(dialogResult.Config.Id);
                 }
+                Snackbar.Add(LocalizationService.GetLocalizedString("ServerSavedSuccess"), Severity.Success);
                 SensorDataService.ClearCache();
                 await LoadConfigsAsync();
             }
@@ -139,7 +136,7 @@
         {
             await IpmiConfigService.SaveConfigAsync(config);
         }
-        catch
+        catch (Exception)
         {
             config.IsEnabled = !desiredState;
             Snackbar.Add(LocalizationService.GetLocalizedString("ServerToggleFailed"), Severity.Error);
