@@ -63,6 +63,12 @@ namespace FanX.Services
 
             foreach (var config in configs)
             {
+                if (config.Id == 0)
+                {
+                    LoggerService.Warn("Skipping IPMI config with missing identifier.");
+                    continue;
+                }
+
                 var (success, output, error) = await ipmiService.GetSdrListAsync(config);
 
                 if (!success)

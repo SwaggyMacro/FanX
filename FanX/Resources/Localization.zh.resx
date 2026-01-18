@@ -212,6 +212,10 @@
     <value>请选择至少一台服务器。</value>
     <comment>Target servers required error</comment>
   </data>
+  <data name="TargetServersHelpText" xml:space="preserve">
+    <value>留空表示应用到所有已启用服务器。</value>
+    <comment>Target servers helper text</comment>
+  </data>
   
   <!-- Language -->
   <data name="Language" xml:space="preserve">

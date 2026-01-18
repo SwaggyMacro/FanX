@@ -118,13 +118,10 @@ namespace FanX.Services
 
                 if (!_db.Queryable<AppSetting>().Any(s => s.Key == "IpmiConfigEnabledInitialized"))
                 {
-                    if (_db.Queryable<IpmiConfig>().Any(c => !c.IsEnabled))
-                    {
-                        _db.Updateable<IpmiConfig>()
-                            .SetColumns(c => new IpmiConfig { IsEnabled = true })
-                            .Where(c => !c.IsEnabled)
-                            .ExecuteCommand();
-                    }
+                    _db.Updateable<IpmiConfig>()
+                        .SetColumns(c => new IpmiConfig { IsEnabled = true })
+                        .Where(c => !c.IsEnabled)
+                        .ExecuteCommand();
 
                     _db.Insertable(new AppSetting
                     {

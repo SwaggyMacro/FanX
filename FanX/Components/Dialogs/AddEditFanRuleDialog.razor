@@ -22,7 +22,7 @@
                 <MudSelect T="int" Label="@LocalizationService.GetLocalizedString("TargetServers")" MultiSelection="true"
                            SelectedValues="_rule.TargetIpmiConfigIds"
                            SelectedValuesChanged="(values) => { if (values != null) _rule.TargetIpmiConfigIds = values.ToList(); }"
-                           Required="true" RequiredError="@LocalizationService.GetLocalizedString("TargetServersRequiredError")">
+                           HelperText="@LocalizationService.GetLocalizedString("TargetServersHelpText")">
                     @if (!_availableServers.Any())
                     {
                         <MudSelectItem T="int" Value="@(-1)" Disabled="true">@Localization.Loading</MudSelectItem>
@@ -147,10 +147,6 @@
         if (!_availableServers.Any())
         {
             _availableServers = await IpmiConfigService.GetConfigsAsync();
-        }
-        if (_rule != null && RuleId != 0 && _availableServers.Any() && _rule.TargetIpmiConfigIds.Count == 0)
-        {
-            _rule.TargetIpmiConfigIds = _availableServers.Select(s => s.Id).ToList();
         }
     }
 

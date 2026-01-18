@@ -219,6 +219,10 @@
     <value>Please select at least one server.</value>
     <comment>Target servers required error</comment>
   </data>
+  <data name="TargetServersHelpText" xml:space="preserve">
+    <value>Leave empty to apply to all enabled servers.</value>
+    <comment>Target servers helper text</comment>
+  </data>
   <data name="RuleOrderUpdated" xml:space="preserve">
     <value>Rule order updated.</value>
     <comment>Snackbar message after updating rule order</comment>
