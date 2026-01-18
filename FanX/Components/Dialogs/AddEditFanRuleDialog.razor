@@ -148,7 +148,7 @@
         {
             _availableServers = await IpmiConfigService.GetConfigsAsync();
         }
-        if (_rule != null && _availableServers.Any() && _rule.TargetIpmiConfigIds.Count == 0)
+        if (_rule != null && RuleId != 0 && _availableServers.Any() && _rule.TargetIpmiConfigIds.Count == 0)
         {
             _rule.TargetIpmiConfigIds = _availableServers.Select(s => s.Id).ToList();
         }

@@ -79,11 +79,13 @@ namespace FanX.Services
             if (configId.HasValue && configId.Value != 0)
             {
                 var config = await configService.GetConfigByIdAsync(configId.Value);
-                return (config.Id == 0 ? null : config, config.Id);
+                var resolvedId = config?.Id ?? 0;
+                return (resolvedId == 0 ? null : config, resolvedId);
             }
 
             var activeConfig = await configService.GetConfigAsync();
-            return (activeConfig.Id == 0 ? null : activeConfig, activeConfig.Id);
+            var activeId = activeConfig?.Id ?? 0;
+            return (activeId == 0 ? null : activeConfig, activeId);
         }
     }
 }
