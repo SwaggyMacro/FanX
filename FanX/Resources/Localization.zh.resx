@@ -248,6 +248,14 @@
     <value>尚未配置服务器。</value>
     <comment>No servers configured message</comment>
   </data>
+  <data name="EnableServer" xml:space="preserve">
+    <value>启用服务器</value>
+    <comment>Enable server tooltip</comment>
+  </data>
+  <data name="DisableServer" xml:space="preserve">
+    <value>停用服务器</value>
+    <comment>Disable server tooltip</comment>
+  </data>
   <data name="ServerNotFound" xml:space="preserve">
     <value>未找到服务器。</value>
     <comment>Server not found message</comment>

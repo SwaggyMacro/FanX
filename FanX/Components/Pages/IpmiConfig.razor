@@ -47,9 +47,10 @@
             <MudTd DataLabel="@Localization.Actions">
                 <MudIconButton Icon="@GetToggleIcon(context)"
                                Color="@GetToggleColor(context)"
+                               Title="@GetToggleTitle(context)"
                                OnClick="@(() => ToggleConfigEnabled(context))" />
                 <MudIconButton Icon="@Icons.Material.Filled.Edit" OnClick="@(() => OpenConfigDialog(context.Id))" />
-                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(() => DeleteConfig(context))" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Title="@Localization.Delete" OnClick="@(() => DeleteConfig(context))" />
             </MudTd>
         </RowTemplate>
         <NoRecordsContent>
@@ -98,9 +99,10 @@
         {
             if (dialogResult.Deleted)
             {
-                Snackbar.Add(LocalizationService.GetLocalizedString("ServerDeletedSuccess"), Severity.Success);
+                await HandleDeleteSuccessAsync();
+                return;
             }
-            else if (dialogResult.Config != null)
+            if (dialogResult.Config != null)
             {
                 if (dialogResult.Config.IsEnabled)
                 {
@@ -151,9 +153,7 @@
                 Snackbar.Add(LocalizationService.GetLocalizedString("ServerDeleteFailed"), Severity.Error);
                 return;
             }
-            Snackbar.Add(LocalizationService.GetLocalizedString("ServerDeletedSuccess"), Severity.Success);
-            SensorDataService.ClearCache();
-            await LoadConfigsAsync();
+            await HandleDeleteSuccessAsync();
         }
     }
 
@@ -167,6 +167,13 @@
         return config.IsEnabled ? Localization.Enabled : Localization.Disabled;
     }
 
+    private async Task HandleDeleteSuccessAsync()
+    {
+        Snackbar.Add(LocalizationService.GetLocalizedString("ServerDeletedSuccess"), Severity.Success);
+        SensorDataService.ClearCache();
+        await LoadConfigsAsync();
+    }
+
     private string GetToggleIcon(FanX.Models.IpmiConfig config)
     {
         return config.IsEnabled ? Icons.Material.Filled.ToggleOn : Icons.Material.Filled.ToggleOff;
@@ -175,5 +182,12 @@
     private Color GetToggleColor(FanX.Models.IpmiConfig config)
     {
         return config.IsEnabled ? Color.Success : Color.Default;
+    }
+
+    private string GetToggleTitle(FanX.Models.IpmiConfig config)
+    {
+        return config.IsEnabled
+            ? LocalizationService.GetLocalizedString("DisableServer")
+            : LocalizationService.GetLocalizedString("EnableServer");
     }
 }

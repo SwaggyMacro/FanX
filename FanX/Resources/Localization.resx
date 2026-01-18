@@ -255,6 +255,14 @@
     <value>No servers configured yet.</value>
     <comment>No servers configured message</comment>
   </data>
+  <data name="EnableServer" xml:space="preserve">
+    <value>Enable server</value>
+    <comment>Enable server tooltip</comment>
+  </data>
+  <data name="DisableServer" xml:space="preserve">
+    <value>Disable server</value>
+    <comment>Disable server tooltip</comment>
+  </data>
   <data name="ServerNotFound" xml:space="preserve">
     <value>Server not found.</value>
     <comment>Server not found message</comment>
