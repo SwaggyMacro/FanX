@@ -191,6 +191,18 @@
     <value>Warning</value>
     <comment>Warning text</comment>
   </data>
+  <data name="Server" xml:space="preserve">
+    <value>Server</value>
+    <comment>Server label</comment>
+  </data>
+  <data name="ServerName" xml:space="preserve">
+    <value>Server Name</value>
+    <comment>Server name label</comment>
+  </data>
+  <data name="NewServer" xml:space="preserve">
+    <value>New Server</value>
+    <comment>New server option</comment>
+  </data>
   <data name="RuleOrderUpdated" xml:space="preserve">
     <value>Rule order updated.</value>
     <comment>Snackbar message after updating rule order</comment>

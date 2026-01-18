@@ -18,6 +18,18 @@
         <EditForm Model="@_config" OnValidSubmit="HandleValidSubmit">
             <DataAnnotationsValidator />
             <MudGrid>
+                <MudItem xs="12" sm="6">
+                    <MudSelect T="int" Label="@LocalizationService.GetLocalizedString("Server")" Value="_selectedConfigId" ValueChanged="OnConfigChanged">
+                        @foreach (var config in _configs)
+                        {
+                            <MudSelectItem Value="@config.Id">@GetConfigLabel(config)</MudSelectItem>
+                        }
+                        <MudSelectItem Value="@NewConfigId">@LocalizationService.GetLocalizedString("NewServer")</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField Label="@LocalizationService.GetLocalizedString("ServerName")" @bind-Value="_config.Name" For="@(() => _config.Name)" />
+                </MudItem>
                 <MudItem xs="12">
                     <MudTextField Label="@Localization.HostnameOrIpAddress" @bind-Value="_config.Host" For="@(() => _config.Host)" />
                 </MudItem>
@@ -45,15 +57,34 @@
         LocalizationService.OnLanguageChanged -= StateHasChanged;
     }
     private FanX.Models.IpmiConfig _config = new();
+    private List<FanX.Models.IpmiConfig> _configs = [];
+    private int _selectedConfigId = NewConfigId;
+    private const int NewConfigId = 0;
 
     protected override async Task OnInitializedAsync()
     {
+        _configs = await IpmiConfigService.GetConfigsAsync();
         _config = await IpmiConfigService.GetConfigAsync();
+        _selectedConfigId = _config.Id == 0 ? NewConfigId : _config.Id;
     }
 
     private async Task HandleValidSubmit()
     {
-        await IpmiConfigService.SaveConfigAsync(_config);
+        _config = await IpmiConfigService.SaveConfigAsync(_config);
+        if (_configs.All(c => c.Id != _config.Id))
+        {
+            _configs.Add(_config);
+        }
+        else
+        {
+            var index = _configs.FindIndex(c => c.Id == _config.Id);
+            if (index >= 0)
+            {
+                _configs[index] = _config;
+            }
+        }
+        _selectedConfigId = _config.Id;
+        await IpmiConfigService.SetActiveConfigAsync(_config.Id);
         // Clear sensor cache and notify success immediately
         SensorDataService.ClearCache();
         Snackbar.Add(Localization.SaveConfigurationSuccess, Severity.Success);
@@ -68,5 +99,37 @@
         {
             Snackbar.Add(Localization.FailedToLoadSensorList, Severity.Error);
         }
+    }
+
+    private async Task OnConfigChanged(int configId)
+    {
+        _selectedConfigId = configId;
+        if (configId == NewConfigId)
+        {
+            _config = new FanX.Models.IpmiConfig();
+            return;
+        }
+
+        _config = _configs.FirstOrDefault(c => c.Id == configId) ?? await IpmiConfigService.GetConfigByIdAsync(configId);
+        if (_config.Id != 0)
+        {
+            await IpmiConfigService.SetActiveConfigAsync(_config.Id);
+            SensorDataService.ClearCache();
+        }
+    }
+
+    private string GetConfigLabel(FanX.Models.IpmiConfig config)
+    {
+        if (!string.IsNullOrWhiteSpace(config.Name))
+        {
+            return config.Name;
+        }
+
+        if (!string.IsNullOrWhiteSpace(config.Host))
+        {
+            return config.Host;
+        }
+
+        return $"{LocalizationService.GetLocalizedString("Server")} {config.Id}";
     }
 }

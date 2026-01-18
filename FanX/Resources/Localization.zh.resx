@@ -184,6 +184,18 @@
     <value>警告</value>
     <comment>Warning text</comment>
   </data>
+  <data name="Server" xml:space="preserve">
+    <value>服务器</value>
+    <comment>Server label</comment>
+  </data>
+  <data name="ServerName" xml:space="preserve">
+    <value>服务器名称</value>
+    <comment>Server name label</comment>
+  </data>
+  <data name="NewServer" xml:space="preserve">
+    <value>新建服务器</value>
+    <comment>New server option</comment>
+  </data>
   
   <!-- Language -->
   <data name="Language" xml:space="preserve">

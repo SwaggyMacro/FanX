@@ -93,12 +93,26 @@ namespace FanX.Services
                     LoggerService.Info("No IPMI config found. Creating default configuration...");
                     var defaultConfig = new IpmiConfig
                     {
+                        Name = "Default",
                         Host = "",
                         Username = "",
                         Password = ""
                     };
                     _db.Insertable(defaultConfig).ExecuteCommand();
                     LoggerService.Info("Default IPMI configuration created.");
+                }
+
+                if (!_db.Queryable<AppSetting>().Any(s => s.Key == "ActiveIpmiConfigId"))
+                {
+                    var defaultConfig = _db.Queryable<IpmiConfig>().OrderBy(c => c.Id).First();
+                    if (defaultConfig != null)
+                    {
+                        _db.Insertable(new AppSetting
+                        {
+                            Key = "ActiveIpmiConfigId",
+                            Value = defaultConfig.Id.ToString()
+                        }).ExecuteCommand();
+                    }
                 }
                 
                 if (!_db.Queryable<NotificationSetting>().Any())

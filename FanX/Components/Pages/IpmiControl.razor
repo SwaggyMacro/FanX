@@ -2,15 +2,25 @@
 @attribute [Authorize(Roles = "Admin")]
 @using FanX.Resources
 @inject IpmiService IpmiService
+@inject IpmiConfigService IpmiConfigService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @inject LocalizationService LocalizationService
+@inject SensorDataService SensorDataService
 @implements IDisposable
 
 <PageTitle>@Localization.IpmiControl</PageTitle>
 
 <MudCard>
     <MudCardContent>
+        <MudStack Row="true" Spacing="2" Style="flex-wrap: wrap;" Class="mb-2">
+            <MudSelect T="int" Label="@LocalizationService.GetLocalizedString("Server")" Value="_selectedConfigId" ValueChanged="OnConfigChanged">
+                @foreach (var config in _configs)
+                {
+                    <MudSelectItem Value="@config.Id">@GetConfigLabel(config)</MudSelectItem>
+                }
+            </MudSelect>
+        </MudStack>
         <MudStack Row="true" Spacing="2" Style="flex-wrap: wrap;">
             <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@GetSensorList" Disabled="@_isLoading" Class="my-1" StartIcon="@Icons.Material.Filled.List">@Localization.GetSensorList</MudButton>
             <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="@GetSdrList" Disabled="@_isLoading" Class="my-1" StartIcon="@Icons.Material.Filled.Storage">@Localization.GetSdrList</MudButton>
@@ -65,10 +75,19 @@
     private string? _error;
     private string[] _tableHeaders = [];
     private List<string[]> _tableData = [];
+    private List<FanX.Models.IpmiConfig> _configs = [];
+    private int _selectedConfigId;
 
     protected override void OnInitialized()
     {
         LocalizationService.OnLanguageChanged += StateHasChanged;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _configs = await IpmiConfigService.GetConfigsAsync();
+        var activeConfig = await IpmiConfigService.GetConfigAsync();
+        _selectedConfigId = activeConfig.Id;
     }
 
     private async Task ExecuteCommand(Func<Task<(bool success, string output, string error)>> command, string[]? headers = null)
@@ -137,5 +156,33 @@
     public void Dispose()
     {
         LocalizationService.OnLanguageChanged -= StateHasChanged;
+    }
+
+    private async Task OnConfigChanged(int configId)
+    {
+        if (_selectedConfigId == configId || configId == 0)
+        {
+            _selectedConfigId = configId;
+            return;
+        }
+
+        _selectedConfigId = configId;
+        await IpmiConfigService.SetActiveConfigAsync(configId);
+        SensorDataService.ClearCache();
+    }
+
+    private string GetConfigLabel(FanX.Models.IpmiConfig config)
+    {
+        if (!string.IsNullOrWhiteSpace(config.Name))
+        {
+            return config.Name;
+        }
+
+        if (!string.IsNullOrWhiteSpace(config.Host))
+        {
+            return config.Host;
+        }
+
+        return $"{LocalizationService.GetLocalizedString("Server")} {config.Id}";
     }
 } 

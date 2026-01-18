@@ -114,7 +114,7 @@ docker run -d \
      - Password: `admin123`
 
 ## How to Use
-- After logging in, navigate to `/ipmi-config` to set up your BMC (iDrac) endpoint, username, and password.
+- After logging in, navigate to `/ipmi-config` to set up your BMC (iDrac) endpoint, username, and password, and add multiple server entries with the dropdown to switch the active target.
 - On the `/fan-control` page, define custom or intelligent fan control rules.
 - Set up notification channels and rules on the `/notifications` page.
 - Adjust log retention days and sensor data policies on the `/settings` page (default is 30 days).

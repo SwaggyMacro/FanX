@@ -30,7 +30,7 @@ public class IpmiService
         using var scope = _scopeFactory.CreateScope();
         var configService = scope.ServiceProvider.GetRequiredService<IpmiConfigService>();
         
-        var config = await configService.GetConfigAsync();
+        var config = await configService.GetActiveConfigAsync();
         if (string.IsNullOrWhiteSpace(config.Host) || string.IsNullOrWhiteSpace(config.Username) || string.IsNullOrWhiteSpace(config.Password))
         {
             const string errorMsg = "IPMI configuration is not set.";
