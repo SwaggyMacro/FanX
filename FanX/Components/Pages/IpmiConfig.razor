@@ -45,7 +45,11 @@
             <MudTd DataLabel="@Localization.Username">@context.Username</MudTd>
             <MudTd DataLabel="@Localization.Enabled">@GetEnabledLabel(context)</MudTd>
             <MudTd DataLabel="@Localization.Actions">
+                <MudIconButton Icon="@GetToggleIcon(context)"
+                               Color="@GetToggleColor(context)"
+                               OnClick="@(() => ToggleConfigEnabled(context))" />
                 <MudIconButton Icon="@Icons.Material.Filled.Edit" OnClick="@(() => OpenConfigDialog(context.Id))" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(() => DeleteConfig(context))" />
             </MudTd>
         </RowTemplate>
         <NoRecordsContent>
@@ -123,6 +127,36 @@
         Snackbar.Add(LocalizationService.GetLocalizedString("ActiveServerSet"), Severity.Success);
     }
 
+    private async Task ToggleConfigEnabled(FanX.Models.IpmiConfig config)
+    {
+        config.IsEnabled = !config.IsEnabled;
+        await IpmiConfigService.SaveConfigAsync(config);
+        SensorDataService.ClearCache();
+        await LoadConfigsAsync();
+    }
+
+    private async Task DeleteConfig(FanX.Models.IpmiConfig config)
+    {
+        var result = await DialogService.ShowMessageBox(
+            Localization.ConfirmDeletion,
+            LocalizationService.GetLocalizedString("ConfirmDeleteServerMessage"),
+            yesText: Localization.Delete,
+            cancelText: Localization.Cancel);
+
+        if (result == true)
+        {
+            var deleted = await IpmiConfigService.DeleteConfigAsync(config.Id);
+            if (!deleted)
+            {
+                Snackbar.Add(LocalizationService.GetLocalizedString("ServerDeleteFailed"), Severity.Error);
+                return;
+            }
+            Snackbar.Add(LocalizationService.GetLocalizedString("ServerDeletedSuccess"), Severity.Success);
+            SensorDataService.ClearCache();
+            await LoadConfigsAsync();
+        }
+    }
+
     private string GetServerName(FanX.Models.IpmiConfig config)
     {
         return string.IsNullOrWhiteSpace(config.Name) ? "-" : config.Name;
@@ -131,5 +165,15 @@
     private string GetEnabledLabel(FanX.Models.IpmiConfig config)
     {
         return config.IsEnabled ? Localization.Enabled : Localization.Disabled;
+    }
+
+    private string GetToggleIcon(FanX.Models.IpmiConfig config)
+    {
+        return config.IsEnabled ? Icons.Material.Filled.ToggleOn : Icons.Material.Filled.ToggleOff;
+    }
+
+    private Color GetToggleColor(FanX.Models.IpmiConfig config)
+    {
+        return config.IsEnabled ? Color.Success : Color.Default;
     }
 }
