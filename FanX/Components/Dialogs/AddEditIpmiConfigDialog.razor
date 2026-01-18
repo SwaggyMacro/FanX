@@ -9,9 +9,9 @@
     <DialogContent>
         <MudForm @ref="_form" @bind-IsValid="@_success">
             <MudTextField Label="@LocalizationService.GetLocalizedString("ServerName")" @bind-Value="_config.Name" />
-            <MudTextField Label="@Localization.HostnameOrIpAddress" @bind-Value="_config.Host" />
-            <MudTextField Label="@Localization.Username" @bind-Value="_config.Username" />
-            <MudTextField Label="@Localization.Password" @bind-Value="_config.Password" InputType="InputType.Password" />
+            <MudTextField Label="@Localization.HostnameOrIpAddress" @bind-Value="_config.Host" Required="true" />
+            <MudTextField Label="@Localization.Username" @bind-Value="_config.Username" Required="true" />
+            <MudTextField Label="@Localization.Password" @bind-Value="_config.Password" InputType="InputType.Password" Required="true" />
 
             <div class="form-check form-switch mt-4">
                 <input class="form-check-input" type="checkbox" role="switch"

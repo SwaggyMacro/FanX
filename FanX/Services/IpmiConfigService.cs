@@ -94,13 +94,6 @@ public class IpmiConfigService
 
     public async Task<bool> DeleteConfigAsync(int configId)
     {
-        var exists = await _dbService.Db.Queryable<IpmiConfig>()
-            .Where(c => c.Id == configId)
-            .AnyAsync();
-        if (!exists)
-        {
-            return false;
-        }
         var deleted = await _dbService.Db.Deleteable<IpmiConfig>().In(configId).ExecuteCommandAsync();
         return deleted > 0;
     }
