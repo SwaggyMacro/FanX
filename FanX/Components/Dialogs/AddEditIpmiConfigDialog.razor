@@ -40,7 +40,7 @@
     public int ConfigId { get; set; }
 
     private FanX.Models.IpmiConfig _config = new();
-    private MudForm? _form;
+    private MudForm _form = default!;
     private bool _success;
     private bool _isNew;
 
@@ -63,11 +63,6 @@
 
     private async Task SaveConfig()
     {
-        if (_form == null)
-        {
-            return;
-        }
-
         await _form.Validate();
         if (!_success)
         {

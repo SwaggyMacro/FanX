@@ -64,7 +64,7 @@
         LocalizationService.OnLanguageChanged -= StateHasChanged;
     }
     private List<FanX.Models.IpmiConfig> _configs = [];
-    private int _activeConfigId;
+    private int? _activeConfigId;
 
     protected override async Task OnInitializedAsync()
     {
@@ -76,7 +76,7 @@
         _configs = await IpmiConfigService.GetConfigsAsync();
         var activeConfig = await IpmiConfigService.GetActiveConfigAsync();
         _activeConfigId = activeConfig.Id == 0
-            ? _configs.FirstOrDefault(c => c.IsEnabled)?.Id ?? 0
+            ? _configs.FirstOrDefault(c => c.IsEnabled)?.Id
             : activeConfig.Id;
     }
 
