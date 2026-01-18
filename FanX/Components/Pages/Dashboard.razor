@@ -691,6 +691,15 @@
         {
             _chartDataCache.Remove(_selectedTimeRange); // Clear cache for current range
             await LoadChartData();
+            
+            // Force charts to update with new data
+            if (_temperatureChart != null)
+                await _temperatureChart.RenderAsync();
+            if (_powerChart != null)
+                await _powerChart.RenderAsync();
+            if (_fanChart != null)
+                await _fanChart.RenderAsync();
+            
             await InvokeAsync(StateHasChanged);
         }
         catch (Exception ex)
@@ -702,11 +711,13 @@
     private async Task ManualRefreshCharts()
     {
         _isChartLoading = true;
-        StateHasChanged();
+        await InvokeAsync(StateHasChanged);
+        
         await RefreshChartData();
+        
         _isChartLoading = false;
         _lastChartUpdate = DateTime.Now;
-        StateHasChanged();
+        await InvokeAsync(StateHasChanged);
     }
 
     public void Dispose()
