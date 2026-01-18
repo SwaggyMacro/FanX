@@ -22,6 +22,7 @@ builder.Services.AddCascadingAuthenticationState();
 
 // Add Custom services
 builder.Services.AddSingleton<DatabaseService>();
+builder.Services.AddSingleton<AppSettingService>();
 builder.Services.AddSingleton<IpmiService>();
 builder.Services.AddSingleton<SensorDataService>();
 builder.Services.AddScoped<IpmiConfigService>();
