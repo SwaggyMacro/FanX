@@ -30,6 +30,14 @@
                 <MudItem xs="12" sm="6">
                     <MudTextField Label="@LocalizationService.GetLocalizedString("ServerName")" @bind-Value="_config.Name" For="@(() => _config.Name)" />
                 </MudItem>
+                <MudItem xs="12" sm="6">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" role="switch"
+                               checked="@_config.IsEnabled"
+                               @onchange="e => { if (e.Value is bool val) { _config.IsEnabled = val; StateHasChanged(); } }" />
+                        <label class="form-check-label" style="margin-left:1rem;">@Localization.Enabled</label>
+                    </div>
+                </MudItem>
                 <MudItem xs="12">
                     <MudTextField Label="@Localization.HostnameOrIpAddress" @bind-Value="_config.Host" For="@(() => _config.Host)" />
                 </MudItem>
@@ -106,7 +114,7 @@
         _selectedConfigId = configId;
         if (configId == NewConfigId)
         {
-            _config = new FanX.Models.IpmiConfig();
+            _config = new FanX.Models.IpmiConfig { IsEnabled = true };
             return;
         }
 
@@ -122,14 +130,15 @@
     {
         if (!string.IsNullOrWhiteSpace(config.Name))
         {
-            return config.Name;
+            return config.IsEnabled ? config.Name : $"{config.Name} ({LocalizationService.GetLocalizedString("Disabled")})";
         }
 
         if (!string.IsNullOrWhiteSpace(config.Host))
         {
-            return config.Host;
+            return config.IsEnabled ? config.Host : $"{config.Host} ({LocalizationService.GetLocalizedString("Disabled")})";
         }
 
-        return $"{LocalizationService.GetLocalizedString("Server")} {config.Id}";
+        var label = $"{LocalizationService.GetLocalizedString("Server")} {config.Id}";
+        return config.IsEnabled ? label : $"{label} ({LocalizationService.GetLocalizedString("Disabled")})";
     }
 }

@@ -203,6 +203,22 @@
     <value>New Server</value>
     <comment>New server option</comment>
   </data>
+  <data name="Servers" xml:space="preserve">
+    <value>Servers</value>
+    <comment>Servers label</comment>
+  </data>
+  <data name="AllServers" xml:space="preserve">
+    <value>All Servers</value>
+    <comment>All servers option</comment>
+  </data>
+  <data name="TargetServers" xml:space="preserve">
+    <value>Target Servers</value>
+    <comment>Target servers label</comment>
+  </data>
+  <data name="TargetServersRequiredError" xml:space="preserve">
+    <value>Please select at least one server.</value>
+    <comment>Target servers required error</comment>
+  </data>
   <data name="RuleOrderUpdated" xml:space="preserve">
     <value>Rule order updated.</value>
     <comment>Snackbar message after updating rule order</comment>

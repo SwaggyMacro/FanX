@@ -10,6 +10,8 @@ namespace FanX.Models
         [SugarColumn(IsPrimaryKey = true, IsIdentity = true)]
         public int Id { get; set; }
 
+        public int IpmiConfigId { get; set; }
+
         public DateTime Timestamp { get; set; }
 
         public string? SensorId { get; set; }

@@ -30,6 +30,14 @@ public class IpmiConfigService
         return await _dbService.Db.Queryable<IpmiConfig>().OrderBy(c => c.Id).ToListAsync();
     }
 
+    public async Task<List<IpmiConfig>> GetEnabledConfigsAsync()
+    {
+        return await _dbService.Db.Queryable<IpmiConfig>()
+            .Where(c => c.IsEnabled)
+            .OrderBy(c => c.Id)
+            .ToListAsync();
+    }
+
     public async Task<IpmiConfig> GetActiveConfigAsync()
     {
         var activeId = await GetActiveConfigIdAsync();

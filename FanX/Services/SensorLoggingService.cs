@@ -37,6 +37,7 @@ namespace FanX.Services
             var dbService = scope.ServiceProvider.GetRequiredService<DatabaseService>();
             var notificationService = scope.ServiceProvider.GetRequiredService<NotificationService>();
             var fanControlService = scope.ServiceProvider.GetRequiredService<FanControlService>();
+            var ipmiConfigService = scope.ServiceProvider.GetRequiredService<IpmiConfigService>();
             
             // Check if interval has changed every N executions to reduce database load
             _workExecutionCount++;
@@ -53,30 +54,44 @@ namespace FanX.Services
                 }
             }
             
-            var (success, output, error) = await ipmiService.GetSdrListAsync();
-
-            if (!success)
+            var configs = await ipmiConfigService.GetEnabledConfigsAsync();
+            if (!configs.Any())
             {
-                LoggerService.Error($"Failed to get SDR list: {error}");
+                LoggerService.Warn("No enabled IPMI configs found. Skipping sensor logging.");
                 return;
             }
-            
-            var sensorData = ipmiService.ParseFullSdrOutput(output).ToList();
-            
-            if (sensorData.Any())
-            {
-                await dbService.Db.Insertable(sensorData).ExecuteCommandAsync();
-                LoggerService.Info($"Logged {sensorData.Count} sensor readings.");
-                
-                // Check for notifications
-                await notificationService.CheckAndSendNotificationsAsync(sensorData);
 
-                // Adjust fan speed based on rules
-                await AdjustFanSpeedBasedOnRules(fanControlService, ipmiService, sensorData);
+            foreach (var config in configs)
+            {
+                var (success, output, error) = await ipmiService.GetSdrListAsync(config);
+
+                if (!success)
+                {
+                    LoggerService.Error($"Failed to get SDR list for IPMI config '{GetConfigLabel(config)}': {error}");
+                    continue;
+                }
+                
+                var sensorData = ipmiService.ParseFullSdrOutput(output).ToList();
+                foreach (var reading in sensorData)
+                {
+                    reading.IpmiConfigId = config.Id;
+                }
+                
+                if (sensorData.Any())
+                {
+                    await dbService.Db.Insertable(sensorData).ExecuteCommandAsync();
+                    LoggerService.Info($"Logged {sensorData.Count} sensor readings for IPMI config '{GetConfigLabel(config)}'.");
+                    
+                    // Check for notifications
+                    await notificationService.CheckAndSendNotificationsAsync(sensorData);
+
+                    // Adjust fan speed based on rules
+                    await AdjustFanSpeedBasedOnRules(fanControlService, ipmiService, sensorData, config);
+                }
             }
         }
 
-        private async Task AdjustFanSpeedBasedOnRules(FanControlService fanControlService, IpmiService ipmiService, List<SensorData> sensorData)
+        private async Task AdjustFanSpeedBasedOnRules(FanControlService fanControlService, IpmiService ipmiService, List<SensorData> sensorData, IpmiConfig config)
         {
             var fanControlMode = await fanControlService.GetFanControlModeAsync();
 
@@ -87,18 +102,18 @@ namespace FanX.Services
                     return;
                 case FanControlMode.Automatic:
                     // When in Automatic mode, ensure the system's fan control is set to automatic.
-                    await ipmiService.SetAutomaticFanControlAsync();
+                    await ipmiService.SetAutomaticFanControlAsync(config);
                     return;
             }
 
             // If we reach here, the mode is Smart.
-            var rules = (await fanControlService.GetRulesAsync())
+            var rules = (await fanControlService.GetRulesAsync(config.Id))
                 .Where(r => r.IsEnabled && r.Conditions.Any())
                 .OrderBy(r => r.SortOrder)
                 .ToList();
             bool anyTriggered = false;
             // Switch to manual mode once before applying rules
-            await ipmiService.SetManualFanControlAsync();
+            await ipmiService.SetManualFanControlAsync(config);
             foreach (var rule in rules)
             {
                 bool match = false;
@@ -123,7 +138,7 @@ namespace FanX.Services
                         if (fanSensor?.SensorId != null)
                         {
                             LoggerService.Info($"Rule '{rule.Name}' triggered. Setting fan '{fanName}' to {rule.TargetFanSpeedPercent}%.");
-                            await ipmiService.SetIndividualFanSpeedAsync(fanSensor.SensorId, rule.TargetFanSpeedPercent);
+                            await ipmiService.SetIndividualFanSpeedAsync(fanSensor.SensorId, rule.TargetFanSpeedPercent, config);
                         }
                     }
                 }
@@ -131,7 +146,7 @@ namespace FanX.Services
             if (!anyTriggered)
             {
                 LoggerService.Info("No fan control rule triggered. Setting fans to automatic.");
-                await ipmiService.SetAutomaticFanControlAsync();
+                await ipmiService.SetAutomaticFanControlAsync(config);
             }
         }
 
@@ -157,5 +172,15 @@ namespace FanX.Services
         {
             _timer?.Dispose();
         }
+
+        private static string GetConfigLabel(IpmiConfig config)
+        {
+            if (!string.IsNullOrWhiteSpace(config.Name))
+            {
+                return config.Name;
+            }
+
+            return string.IsNullOrWhiteSpace(config.Host) ? $"ID {config.Id}" : config.Host;
+        }
     }
-}
+} 

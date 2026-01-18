@@ -115,6 +115,23 @@ namespace FanX.Services
                         }).ExecuteCommand();
                     }
                 }
+
+                if (!_db.Queryable<AppSetting>().Any(s => s.Key == "IpmiConfigEnabledInitialized"))
+                {
+                    if (_db.Queryable<IpmiConfig>().Any(c => !c.IsEnabled))
+                    {
+                        _db.Updateable<IpmiConfig>()
+                            .SetColumns(c => new IpmiConfig { IsEnabled = true })
+                            .Where(c => !c.IsEnabled)
+                            .ExecuteCommand();
+                    }
+
+                    _db.Insertable(new AppSetting
+                    {
+                        Key = "IpmiConfigEnabledInitialized",
+                        Value = "true"
+                    }).ExecuteCommand();
+                }
                 
                 if (!_db.Queryable<NotificationSetting>().Any())
                 {
@@ -127,6 +144,25 @@ namespace FanX.Services
                     };
                     _db.Insertable(defaultSettings).ExecuteCommand();
                     LoggerService.Info("Default Notification settings created.");
+                }
+
+                if (!_db.Queryable<AppSetting>().Any(s => s.Key == "SensorDataIpmiConfigInitialized"))
+                {
+                    var configQuery = _db.Queryable<IpmiConfig>();
+                    if (configQuery.Any() && _db.Queryable<SensorData>().Any(s => s.IpmiConfigId == 0))
+                    {
+                        var defaultConfig = configQuery.OrderBy(c => c.Id).First();
+                        _db.Updateable<SensorData>()
+                            .SetColumns(s => new SensorData { IpmiConfigId = defaultConfig.Id })
+                            .Where(s => s.IpmiConfigId == 0)
+                            .ExecuteCommand();
+                    }
+
+                    _db.Insertable(new AppSetting
+                    {
+                        Key = "SensorDataIpmiConfigInitialized",
+                        Value = "true"
+                    }).ExecuteCommand();
                 }
                 
                 LoggerService.Info("Database initialization completed successfully.");

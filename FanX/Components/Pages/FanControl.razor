@@ -1,11 +1,13 @@
 @page "/fan-control"
 @attribute [Authorize(Roles = "Admin")]
 @using FanX.Resources
+@using FanX.Models
 @inject FanControlService FanControlService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
 @inject LocalizationService LocalizationService
 @inject SensorDataService SensorDataService
+@inject IpmiConfigService IpmiConfigService
 @implements IDisposable
 
 <PageTitle>@Localization.FanControlSettings</PageTitle>
@@ -36,6 +38,7 @@
                 <MudTh></MudTh> <!-- Sort order column -->
                 <MudTh>@Localization.Enabled</MudTh>
                 <MudTh>@Localization.RuleName</MudTh>
+                <MudTh>@LocalizationService.GetLocalizedString("Servers")</MudTh>
                 <MudTh>@Localization.Conditions</MudTh>
                 <MudTh>@Localization.TargetFanSpeed</MudTh>
                 <MudTh>@Localization.Actions</MudTh>
@@ -65,6 +68,7 @@
                     </div>
                 </MudTd>
                 <MudTd DataLabel="@Localization.RuleName">@context.Name</MudTd>
+                <MudTd DataLabel="@LocalizationService.GetLocalizedString("Servers")">@GetTargetServerSummary(context)</MudTd>
                 <MudTd DataLabel="@Localization.Conditions">@context.Conditions.Count</MudTd>
                 <MudTd DataLabel="@Localization.TargetFanSpeed">@context.TargetFanSpeedPercent %</MudTd>
                 <MudTd>
@@ -96,6 +100,7 @@
     private List<FanControlRule> _rules = new();
     public FanControlMode SelectedMode { get; private set; }
     private List<SensorData> _availableSensors = new();
+    private List<FanX.Models.IpmiConfig> _ipmiConfigs = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -103,6 +108,7 @@
         SelectedMode = await FanControlService.GetFanControlModeAsync();
         LocalizationService.OnLanguageChanged += StateHasChanged;
         await LoadAvailableSensors();
+        _ipmiConfigs = await IpmiConfigService.GetConfigsAsync();
     }
 
     private async Task LoadAvailableSensors()
@@ -182,7 +188,8 @@
         var parameters = new DialogParameters
         {
             ["RuleId"] = ruleId,
-            ["AvailableSensors"] = _availableSensors
+            ["AvailableSensors"] = _availableSensors,
+            ["AvailableServers"] = _ipmiConfigs
         };
         var title = ruleId == 0 ? Localization.AddNewRule : Localization.EditRule;
         var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium };
@@ -215,5 +222,41 @@
     public void Dispose()
     {
         LocalizationService.OnLanguageChanged -= StateHasChanged;
+    }
+
+    private string GetTargetServerSummary(FanControlRule rule)
+    {
+        if (_ipmiConfigs.Count == 0)
+        {
+            return LocalizationService.GetLocalizedString("AllServers");
+        }
+
+        if (rule.TargetIpmiConfigIds.Count == 0)
+        {
+            return LocalizationService.GetLocalizedString("AllServers");
+        }
+
+        var names = _ipmiConfigs
+            .Where(config => rule.TargetIpmiConfigIds.Contains(config.Id))
+            .Select(GetConfigLabel)
+            .ToList();
+
+        return names.Any() ? string.Join(", ", names) : LocalizationService.GetLocalizedString("AllServers");
+    }
+
+    private string GetConfigLabel(FanX.Models.IpmiConfig config)
+    {
+        if (!string.IsNullOrWhiteSpace(config.Name))
+        {
+            return config.IsEnabled ? config.Name : $"{config.Name} ({LocalizationService.GetLocalizedString("Disabled")})";
+        }
+
+        if (!string.IsNullOrWhiteSpace(config.Host))
+        {
+            return config.IsEnabled ? config.Host : $"{config.Host} ({LocalizationService.GetLocalizedString("Disabled")})";
+        }
+
+        var label = $"{LocalizationService.GetLocalizedString("Server")} {config.Id}";
+        return config.IsEnabled ? label : $"{label} ({LocalizationService.GetLocalizedString("Disabled")})";
     }
 }

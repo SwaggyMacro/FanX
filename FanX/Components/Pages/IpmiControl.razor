@@ -136,9 +136,9 @@
         _tableData = lines.Select(line => line.Split('|').Select(c => c.Trim()).ToArray()).ToList();
     }
 
-    private async Task GetSensorList() => await ExecuteCommand(IpmiService.GetSdrListAsync, ["Sensor Name", "ID", "Status", "Entity", "Reading"]);
-    private async Task GetSdrList() => await ExecuteCommand(IpmiService.GetSdrListAsync, ["Sensor Name", "ID", "Status", "Entity", "Reading"]);
-    private async Task GetFanSpeed() => await ExecuteCommand(IpmiService.GetSdrListAsync, ["Sensor Name", "ID", "Status", "Entity", "Reading"]);
+    private async Task GetSensorList() => await ExecuteCommand(() => IpmiService.GetSdrListAsync(), ["Sensor Name", "ID", "Status", "Entity", "Reading"]);
+    private async Task GetSdrList() => await ExecuteCommand(() => IpmiService.GetSdrListAsync(), ["Sensor Name", "ID", "Status", "Entity", "Reading"]);
+    private async Task GetFanSpeed() => await ExecuteCommand(() => IpmiService.GetSdrListAsync(), ["Sensor Name", "ID", "Status", "Entity", "Reading"]);
     private async Task GetPowerStatus() => await ExecuteCommand(() => IpmiService.PowerControlAsync("status"));
 
     private async Task ConfirmAndExecutePowerAction(string action)
@@ -176,14 +176,15 @@
     {
         if (!string.IsNullOrWhiteSpace(config.Name))
         {
-            return config.Name;
+            return config.IsEnabled ? config.Name : $"{config.Name} ({LocalizationService.GetLocalizedString("Disabled")})";
         }
 
         if (!string.IsNullOrWhiteSpace(config.Host))
         {
-            return config.Host;
+            return config.IsEnabled ? config.Host : $"{config.Host} ({LocalizationService.GetLocalizedString("Disabled")})";
         }
 
-        return $"{LocalizationService.GetLocalizedString("Server")} {config.Id}";
+        var label = $"{LocalizationService.GetLocalizedString("Server")} {config.Id}";
+        return config.IsEnabled ? label : $"{label} ({LocalizationService.GetLocalizedString("Disabled")})";
     }
 } 

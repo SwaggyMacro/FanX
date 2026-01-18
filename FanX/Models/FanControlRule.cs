@@ -19,8 +19,13 @@ public class FanControlRule
 
     public string TargetFanNamesJson { get; set; } = "[]";
 
+    public string TargetIpmiConfigIdsJson { get; set; } = "[]";
+
     [SugarColumn(IsIgnore = true)]
     public List<string> TargetFanNames { get; set; } = new();
+
+    [SugarColumn(IsIgnore = true)]
+    public List<int> TargetIpmiConfigIds { get; set; } = new();
     
     [SugarColumn(IsIgnore = true)]
     public List<FanControlCondition> Conditions { get; set; } = new();

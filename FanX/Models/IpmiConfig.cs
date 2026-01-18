@@ -7,6 +7,7 @@ namespace FanX.Models
         [SugarColumn(IsPrimaryKey = true, IsIdentity = true)]
         public int Id { get; set; }
         public string? Name { get; set; }
+        public bool IsEnabled { get; set; } = true;
         public string? Host { get; set; }
         public string? Username { get; set; }
         public string? Password { get; set; }

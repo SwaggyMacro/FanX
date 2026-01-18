@@ -196,6 +196,22 @@
     <value>新建服务器</value>
     <comment>New server option</comment>
   </data>
+  <data name="Servers" xml:space="preserve">
+    <value>服务器</value>
+    <comment>Servers label</comment>
+  </data>
+  <data name="AllServers" xml:space="preserve">
+    <value>所有服务器</value>
+    <comment>All servers option</comment>
+  </data>
+  <data name="TargetServers" xml:space="preserve">
+    <value>目标服务器</value>
+    <comment>Target servers label</comment>
+  </data>
+  <data name="TargetServersRequiredError" xml:space="preserve">
+    <value>请选择至少一台服务器。</value>
+    <comment>Target servers required error</comment>
+  </data>
   
   <!-- Language -->
   <data name="Language" xml:space="preserve">
