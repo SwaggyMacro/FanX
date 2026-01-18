@@ -6,17 +6,25 @@ namespace FanX.Services
     {
         private readonly IServiceProvider _serviceProvider;
         private Timer? _timer;
+        private int _currentIntervalSeconds = 60; // Default 60 seconds
 
         public SensorLoggingService(IServiceProvider serviceProvider)
         {
             _serviceProvider = serviceProvider;
         }
 
-        public Task StartAsync(CancellationToken cancellationToken)
+        public async Task StartAsync(CancellationToken cancellationToken)
         {
             LoggerService.Info("Sensor Logging Service is starting.");
-            _timer = new Timer(DoWork, null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
-            return Task.CompletedTask;
+            
+            // Load polling interval from settings
+            using var scope = _serviceProvider.CreateScope();
+            var settingService = scope.ServiceProvider.GetRequiredService<AppSettingService>();
+            _currentIntervalSeconds = await settingService.GetIntSettingAsync("IpmiPollingIntervalSeconds", 60);
+            
+            LoggerService.Info($"IPMI polling interval set to {_currentIntervalSeconds} seconds.");
+            
+            _timer = new Timer(DoWork, null, TimeSpan.Zero, TimeSpan.FromSeconds(_currentIntervalSeconds));
         }
 
         private async void DoWork(object? state)
@@ -27,6 +35,16 @@ namespace FanX.Services
             var dbService = scope.ServiceProvider.GetRequiredService<DatabaseService>();
             var notificationService = scope.ServiceProvider.GetRequiredService<NotificationService>();
             var fanControlService = scope.ServiceProvider.GetRequiredService<FanControlService>();
+            var settingService = scope.ServiceProvider.GetRequiredService<AppSettingService>();
+            
+            // Check if interval has changed
+            var newInterval = await settingService.GetIntSettingAsync("IpmiPollingIntervalSeconds", 60);
+            if (newInterval != _currentIntervalSeconds && newInterval >= 10 && newInterval <= 3600)
+            {
+                _currentIntervalSeconds = newInterval;
+                _timer?.Change(TimeSpan.Zero, TimeSpan.FromSeconds(_currentIntervalSeconds));
+                LoggerService.Info($"IPMI polling interval changed to {_currentIntervalSeconds} seconds.");
+            }
             
             var (success, output, error) = await ipmiService.GetSdrListAsync();
 

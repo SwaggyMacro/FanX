@@ -3,6 +3,7 @@
 @using System.IO
 @using FanX.Resources
 @inject DatabaseService DatabaseService
+@inject AppSettingService AppSettingService
 @inject ISnackbar Snackbar
 @inject LocalizationService LocalizationService
 
@@ -24,6 +25,28 @@
                 </MudItem>
                 <MudItem xs="12" sm="6">
                     <MudNumericField T="int" Label="@Localization.SensorDataRetentionDays" @bind-Value="_sensorDataRetentionDays" Min="0" Class="mb-4" />
+                </MudItem>
+            </MudGrid>
+            <MudDivider Class="my-4" />
+            <MudText Typo="Typo.h6" Class="mb-3">Performance Settings</MudText>
+            <MudGrid Class="mb-4">
+                <MudItem xs="12" sm="6">
+                    <MudNumericField T="int" 
+                                    Label="IPMI Polling Interval (seconds)" 
+                                    @bind-Value="_ipmiPollingIntervalSeconds" 
+                                    Min="10" 
+                                    Max="3600"
+                                    HelperText="How often to fetch sensor data via IPMI (10-3600 seconds)"
+                                    Class="mb-4" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudNumericField T="int" 
+                                    Label="Dashboard Chart Refresh (seconds)" 
+                                    @bind-Value="_dashboardChartRefreshSeconds" 
+                                    Min="0" 
+                                    Max="3600"
+                                    HelperText="0 = disabled, or refresh interval (10-3600 seconds)"
+                                    Class="mb-4" />
                 </MudItem>
             </MudGrid>
             <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@SaveSettings" StartIcon="@Icons.Material.Filled.Save">
@@ -49,6 +72,9 @@
     private bool _allowRegistration;
     private int _logRetentionDays;
     private int _sensorDataRetentionDays;
+    private int _ipmiPollingIntervalSeconds = 60;
+    private int _dashboardChartRefreshSeconds = 0;
+    
     protected override async Task OnInitializedAsync()
     {
         LocalizationService.OnLanguageChanged += StateHasChanged;
@@ -62,6 +88,10 @@
             _logRetentionDays = int.TryParse(settings.First(s => s.Key == "LogRetentionDays").Value, out var d1) ? d1 : 0;
         if (settings.Any(s => s.Key == "SensorDataRetentionDays"))
             _sensorDataRetentionDays = int.TryParse(settings.First(s => s.Key == "SensorDataRetentionDays").Value, out var d3) ? d3 : 0;
+        
+        // Load new performance settings
+        _ipmiPollingIntervalSeconds = await AppSettingService.GetIntSettingAsync("IpmiPollingIntervalSeconds", 60);
+        _dashboardChartRefreshSeconds = await AppSettingService.GetIntSettingAsync("DashboardChartRefreshSeconds", 0);
     }
 
     private async Task SaveSettings()
@@ -95,7 +125,12 @@
             }
             await Upsert("LogRetentionDays", _logRetentionDays.ToString());
             await Upsert("SensorDataRetentionDays", _sensorDataRetentionDays.ToString());
-            Snackbar.Add(Localization.SettingsSavedSuccess, Severity.Success);
+            
+            // Save new performance settings using AppSettingService
+            await AppSettingService.SetSettingAsync("IpmiPollingIntervalSeconds", _ipmiPollingIntervalSeconds.ToString());
+            await AppSettingService.SetSettingAsync("DashboardChartRefreshSeconds", _dashboardChartRefreshSeconds.ToString());
+            
+            Snackbar.Add(Localization.SettingsSavedSuccess + " Please reload the page for changes to take effect.", Severity.Success);
         }
         catch (Exception)
         {

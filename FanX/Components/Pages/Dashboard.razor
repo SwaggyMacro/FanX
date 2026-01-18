@@ -269,6 +269,7 @@
 
 @code {
     private Timer? _timer;
+    private Timer? _chartRefreshTimer;
     private ApexChartOptions<ChartDataPoint> _temperatureChartOptions = new();
     private ApexChartOptions<ChartDataPoint> _fanChartOptions = new();
     private ApexChartOptions<ChartDataPoint> _powerChartOptions = new();
@@ -289,12 +290,14 @@
     private bool _isLiveDataLoading = true;
     private bool _isStatsLoading = true;
     private bool _isChartLoading = true;
+    private bool _hasDataEverLoaded = false;
 
     // Performance optimization variables
     private int _selectedTimeRange = 24; // Hours
     private DateTime _lastDataUpdate = DateTime.MinValue;
     private readonly Dictionary<int, List<ChartDataPoint>> _chartDataCache = new();
     private const int MaxChartPoints = 150;
+    private int _chartRefreshIntervalSeconds = 0; // 0 = disabled
 
     protected override void OnInitialized()
     {
@@ -307,6 +310,11 @@
     {
         if (firstRender)
         {
+            // Load chart refresh interval setting
+            await using var scope = ScopeFactory.CreateAsyncScope();
+            var settingService = scope.ServiceProvider.GetRequiredService<AppSettingService>();
+            _chartRefreshIntervalSeconds = await settingService.GetIntSettingAsync("DashboardChartRefreshSeconds", 0);
+            
             // Load data asynchronously after first render
             _ = Task.Run(async () =>
             {
@@ -331,6 +339,14 @@
             });
             
             _timer = new Timer(async void (_) => await InvokeAsync(LoadLiveDataOnly), null, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5));
+            
+            // Setup chart refresh timer if enabled
+            if (_chartRefreshIntervalSeconds > 0)
+            {
+                _chartRefreshTimer = new Timer(async void (_) => await InvokeAsync(RefreshChartData), null, 
+                    TimeSpan.FromSeconds(_chartRefreshIntervalSeconds), 
+                    TimeSpan.FromSeconds(_chartRefreshIntervalSeconds));
+            }
         }
     }
 
@@ -365,9 +381,15 @@
 
             if (latestTimestamp == default)
             {
-                _liveCpuData.Clear();
-                _liveFanData.Clear();
-                _livePowerData = null;
+                // Only clear data if we haven't loaded any data yet
+                if (!_hasDataEverLoaded)
+                {
+                    _liveCpuData.Clear();
+                    _liveFanData.Clear();
+                    _livePowerData = null;
+                }
+                // If data was loaded before but not now, keep showing old data
+                // This prevents "No data available" flash when IPMI polling is in progress
                 _isLiveDataLoading = false;
                 return;
             }
@@ -380,6 +402,7 @@
             _liveFanData = latestData.Where(d => d.SensorType == "Fan" && d.SensorName != "Fan Redundancy").ToList();
             _livePowerData = latestData.FirstOrDefault(d => d.SensorName == "Pwr Consumption");
             _isLiveDataLoading = false;
+            _hasDataEverLoaded = true;
 
             // Refresh statistics periodically
             if (DateTime.Now - _lastDataUpdate > TimeSpan.FromMinutes(1))
@@ -607,9 +630,24 @@
         };
     }
 
+    private async Task RefreshChartData()
+    {
+        try
+        {
+            _chartDataCache.Remove(_selectedTimeRange); // Clear cache for current range
+            await LoadChartData();
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            LoggerService.Error("Failed to refresh chart data", ex);
+        }
+    }
+
     public void Dispose()
     {
         _timer?.Dispose();
+        _chartRefreshTimer?.Dispose();
         ThemeService.OnThemeChanged -= OnThemeChanged;
         LocalizationService.OnLanguageChanged -= StateHasChanged;
         _chartDataCache.Clear();
