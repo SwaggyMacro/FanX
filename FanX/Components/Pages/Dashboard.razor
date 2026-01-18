@@ -404,9 +404,16 @@
         {
             await using var scope = ScopeFactory.CreateAsyncScope();
             var db = scope.ServiceProvider.GetRequiredService<DatabaseService>().Db;
+            var configService = scope.ServiceProvider.GetRequiredService<IpmiConfigService>();
+            var activeConfig = await configService.GetConfigAsync();
+            var activeConfigId = activeConfig.Id;
 
-            var latestTimestamp = await db.Queryable<SensorData>()
-                .MaxAsync(s => s.Timestamp);
+            var latestTimestampQuery = db.Queryable<SensorData>();
+            if (activeConfigId != 0)
+            {
+                latestTimestampQuery = latestTimestampQuery.Where(s => s.IpmiConfigId == activeConfigId);
+            }
+            var latestTimestamp = await latestTimestampQuery.MaxAsync(s => s.Timestamp);
 
             if (latestTimestamp == default)
             {
@@ -423,9 +430,12 @@
                 return;
             }
 
-            var latestData = await db.Queryable<SensorData>()
-                .Where(s => s.Timestamp == latestTimestamp)
-                .ToListAsync();
+            var latestDataQuery = db.Queryable<SensorData>().Where(s => s.Timestamp == latestTimestamp);
+            if (activeConfigId != 0)
+            {
+                latestDataQuery = latestDataQuery.Where(s => s.IpmiConfigId == activeConfigId);
+            }
+            var latestData = await latestDataQuery.ToListAsync();
 
             // Only update if we got actual data
             if (latestData != null && latestData.Any())
@@ -483,6 +493,9 @@
         {
             await using var scope = ScopeFactory.CreateAsyncScope();
             var db = scope.ServiceProvider.GetRequiredService<DatabaseService>().Db;
+            var configService = scope.ServiceProvider.GetRequiredService<IpmiConfigService>();
+            var activeConfig = await configService.GetConfigAsync();
+            var activeConfigId = activeConfig.Id;
 
             var now = DateTime.Now;
             var hourAgo = now.AddHours(-1);
@@ -491,12 +504,17 @@
             var monthAgo = now.AddDays(-30);
 
             // Load all sensor data from the past month in one query
-            var allData = await db.Queryable<SensorData>()
+            var allDataQuery = db.Queryable<SensorData>()
                 .Where(s => s.Timestamp >= monthAgo && 
                            s.SensorName != null &&
                            (s.SensorType == "Temperature" || 
                             s.SensorType == "Fan" || 
-                            s.SensorName == "Pwr Consumption"))
+                            s.SensorName == "Pwr Consumption"));
+            if (activeConfigId != 0)
+            {
+                allDataQuery = allDataQuery.Where(s => s.IpmiConfigId == activeConfigId);
+            }
+            var allData = await allDataQuery
                 .Select(s => new { s.SensorName, s.SensorType, s.Reading, s.Timestamp })
                 .ToListAsync();
 
@@ -558,14 +576,22 @@
 
             await using var scope = ScopeFactory.CreateAsyncScope();
             var db = scope.ServiceProvider.GetRequiredService<DatabaseService>().Db;
+            var configService = scope.ServiceProvider.GetRequiredService<IpmiConfigService>();
+            var activeConfig = await configService.GetConfigAsync();
+            var activeConfigId = activeConfig.Id;
 
             var now = DateTime.Now;
             var startTime = now.AddHours(-_selectedTimeRange);
             var totalMinutes = _selectedTimeRange * 60;
             var intervalMinutes = Math.Max(1, totalMinutes / MaxChartPoints);
 
-            var rawData = await db.Queryable<SensorData>()
-                .Where(s => s.Timestamp >= startTime)
+            var rawDataQuery = db.Queryable<SensorData>()
+                .Where(s => s.Timestamp >= startTime);
+            if (activeConfigId != 0)
+            {
+                rawDataQuery = rawDataQuery.Where(s => s.IpmiConfigId == activeConfigId);
+            }
+            var rawData = await rawDataQuery
                 .GroupBy(s => new { 
                     s.SensorName,
                     s.SensorType,

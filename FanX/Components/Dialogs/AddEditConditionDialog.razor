@@ -1,6 +1,7 @@
 @using FanX.Resources
 @inject LocalizationService LocalizationService
 @inject DatabaseService DbService
+@inject IpmiConfigService IpmiConfigService
 @implements IDisposable
 
 <MudDialog>
@@ -62,8 +63,13 @@
 
     private async Task LoadSensorNamesAsync()
     {
-        _sensorNames = await DbService.Db.Queryable<SensorData>()
-            .Select(s => s.SensorName)
+        var activeConfig = await IpmiConfigService.GetConfigAsync();
+        var query = DbService.Db.Queryable<SensorData>();
+        if (activeConfig.Id != 0)
+        {
+            query = query.Where(s => s.IpmiConfigId == activeConfig.Id);
+        }
+        _sensorNames = await query.Select(s => s.SensorName)
             .Distinct()
             .ToListAsync();
         StateHasChanged();

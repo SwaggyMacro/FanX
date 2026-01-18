@@ -1,9 +1,11 @@
 @using FanX.Resources
+@using FanX.Models
 @inject FanControlService FanControlService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @inject LocalizationService LocalizationService
 @inject SensorDataService SensorDataService
+@inject IpmiConfigService IpmiConfigService
 @implements IDisposable
 
 <MudDialog>
@@ -17,6 +19,23 @@
             <MudForm @ref="_form" @bind-IsValid="@_success" Class="mb-4">
                 <MudTextField @bind-Value="@_rule.Name" Label="@Localization.RuleName" Required="true" />
                 
+                <MudSelect T="int" Label="@LocalizationService.GetLocalizedString("TargetServers")" MultiSelection="true"
+                           SelectedValues="_rule.TargetIpmiConfigIds"
+                           SelectedValuesChanged="(values) => { if (values != null) _rule.TargetIpmiConfigIds = values.ToList(); }"
+                           HelperText="@LocalizationService.GetLocalizedString("TargetServersHelpText")">
+                    @if (!_availableServers.Any())
+                    {
+                        <MudSelectItem T="int" Value="@(-1)" Disabled="true">@Localization.Loading</MudSelectItem>
+                    }
+                    else
+                    {
+                        @foreach (var server in _availableServers)
+                        {
+                            <MudSelectItem T="int" Value="@server.Id">@GetServerLabel(server)</MudSelectItem>
+                        }
+                    }
+                </MudSelect>
+
                 <MudSelect T="string" Label="@Localization.TargetFans" MultiSelection="true"
                            SelectedValues="_rule.TargetFanNames"
                            SelectedValuesChanged="(values) => { if (values != null) _rule.TargetFanNames = values.ToList(); }"
@@ -97,9 +116,13 @@
     [Parameter]
     public List<SensorData> AvailableSensors { get; set; } = new();
 
+    [Parameter]
+    public List<FanX.Models.IpmiConfig> AvailableServers { get; set; } = new();
+
     private FanControlRule? _rule;
     private MudForm? _form;
     private bool _success;
+    private List<FanX.Models.IpmiConfig> _availableServers = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -118,6 +141,12 @@
         if (!_localSensors.Any())
         {
             _localSensors = await SensorDataService.GetSensorsAsync();
+        }
+
+        _availableServers = AvailableServers ?? new List<FanX.Models.IpmiConfig>();
+        if (!_availableServers.Any())
+        {
+            _availableServers = await IpmiConfigService.GetConfigsAsync();
         }
     }
 
@@ -209,7 +238,23 @@
     {
         LocalizationService.OnLanguageChanged -= StateHasChanged;
     }
-} 
+
+    private string GetServerLabel(FanX.Models.IpmiConfig config)
+    {
+        if (!string.IsNullOrWhiteSpace(config.Name))
+        {
+            return config.IsEnabled ? config.Name : $"{config.Name} ({LocalizationService.GetLocalizedString("Disabled")})";
+        }
+
+        if (!string.IsNullOrWhiteSpace(config.Host))
+        {
+            return config.IsEnabled ? config.Host : $"{config.Host} ({LocalizationService.GetLocalizedString("Disabled")})";
+        }
+
+        var label = $"{LocalizationService.GetLocalizedString("Server")} {config.Id}";
+        return config.IsEnabled ? label : $"{label} ({LocalizationService.GetLocalizedString("Disabled")})";
+    }
+}
 <style>
     .form-check.form-switch .form-check-input {
         width: 3.0rem;

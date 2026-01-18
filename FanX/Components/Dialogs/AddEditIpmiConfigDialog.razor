@@ -1,0 +1,114 @@
+@using FanX.Resources
+@inject IpmiConfigService IpmiConfigService
+@inject ISnackbar Snackbar
+@inject LocalizationService LocalizationService
+@inject IDialogService DialogService
+@implements IDisposable
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="_form" @bind-IsValid="@_success">
+            <MudTextField Label="@LocalizationService.GetLocalizedString("ServerName")" @bind-Value="_config.Name" />
+            <MudTextField Label="@Localization.HostnameOrIpAddress" @bind-Value="_config.Host" Required="true" />
+            <MudTextField Label="@Localization.Username" @bind-Value="_config.Username" Required="true" />
+            <MudTextField Label="@Localization.Password" @bind-Value="_config.Password" InputType="InputType.Password" Required="true" />
+
+            <div class="form-check form-switch mt-4">
+                <input class="form-check-input" type="checkbox" role="switch"
+                       checked="@_config.IsEnabled"
+                       @onchange="e => { if (e.Value is bool val) { _config.IsEnabled = val; StateHasChanged(); } }" />
+                <label class="form-check-label ms-2">@Localization.Enabled</label>
+            </div>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        @if (!_isNew)
+        {
+            <MudButton Color="Color.Error" StartIcon="@Icons.Material.Filled.Delete" OnClick="@DeleteConfig">@Localization.Delete</MudButton>
+        }
+        <MudSpacer />
+        <MudButton OnClick="@Cancel">@Localization.Cancel</MudButton>
+        <MudButton Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save" OnClick="@SaveConfig">@Localization.SaveConfiguration</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    public int ConfigId { get; set; }
+
+    private FanX.Models.IpmiConfig _config = new();
+    private MudForm _form = default!;
+    private bool _success;
+    private bool _isNew;
+
+    protected override async Task OnInitializedAsync()
+    {
+        LocalizationService.OnLanguageChanged += StateHasChanged;
+        if (ConfigId != 0)
+        {
+            _config = await IpmiConfigService.GetConfigByIdAsync(ConfigId);
+            if (_config.Id == 0)
+            {
+                Snackbar.Add(LocalizationService.GetLocalizedString("ServerNotFound"), Severity.Error);
+                MudDialog.Cancel();
+                return;
+            }
+        }
+
+        _isNew = _config.Id == 0;
+        if (_isNew)
+        {
+            _config.IsEnabled = true;
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task SaveConfig()
+    {
+        await _form.Validate();
+        if (!_success)
+        {
+            Snackbar.Add(Localization.FixValidationErrors, Severity.Warning);
+            return;
+        }
+
+        _config = await IpmiConfigService.SaveConfigAsync(_config);
+        MudDialog.Close(DialogResult.Ok(new IpmiConfigDialogResult { Config = _config }));
+    }
+
+    private async Task DeleteConfig()
+    {
+        var result = await DialogService.ShowMessageBox(
+            Localization.ConfirmDeletion,
+            LocalizationService.GetLocalizedString("ConfirmDeleteServerMessage"),
+            yesText: Localization.Delete,
+            cancelText: Localization.Cancel);
+
+        if (result == true)
+        {
+            var deleted = await IpmiConfigService.DeleteConfigAsync(_config.Id);
+            if (!deleted)
+            {
+                Snackbar.Add(LocalizationService.GetLocalizedString("ServerDeleteFailed"), Severity.Error);
+                return;
+            }
+            MudDialog.Close(DialogResult.Ok(new IpmiConfigDialogResult { ConfigId = _config.Id, Deleted = true }));
+        }
+    }
+
+    public void Dispose()
+    {
+        LocalizationService.OnLanguageChanged -= StateHasChanged;
+    }
+
+    public class IpmiConfigDialogResult
+    {
+        public FanX.Models.IpmiConfig? Config { get; set; }
+        public int ConfigId { get; set; }
+        public bool Deleted { get; set; }
+    }
+}

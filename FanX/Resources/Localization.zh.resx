@@ -184,6 +184,90 @@
     <value>警告</value>
     <comment>Warning text</comment>
   </data>
+  <data name="Server" xml:space="preserve">
+    <value>服务器</value>
+    <comment>Server label</comment>
+  </data>
+  <data name="ServerName" xml:space="preserve">
+    <value>服务器名称</value>
+    <comment>Server name label</comment>
+  </data>
+  <data name="NewServer" xml:space="preserve">
+    <value>新建服务器</value>
+    <comment>New server option</comment>
+  </data>
+  <data name="Servers" xml:space="preserve">
+    <value>服务器</value>
+    <comment>Servers label</comment>
+  </data>
+  <data name="AllServers" xml:space="preserve">
+    <value>所有服务器</value>
+    <comment>All servers option</comment>
+  </data>
+  <data name="TargetServers" xml:space="preserve">
+    <value>目标服务器</value>
+    <comment>Target servers label</comment>
+  </data>
+  <data name="TargetServersRequiredError" xml:space="preserve">
+    <value>请选择至少一台服务器。</value>
+    <comment>Target servers required error</comment>
+  </data>
+  <data name="TargetServersHelpText" xml:space="preserve">
+    <value>留空表示应用到所有已启用服务器。</value>
+    <comment>Target servers helper text</comment>
+  </data>
+  <data name="AddServer" xml:space="preserve">
+    <value>新增服务器</value>
+    <comment>Add server button text</comment>
+  </data>
+  <data name="EditServer" xml:space="preserve">
+    <value>编辑服务器</value>
+    <comment>Edit server dialog title</comment>
+  </data>
+  <data name="SetActiveServer" xml:space="preserve">
+    <value>设为当前</value>
+    <comment>Set active server action</comment>
+  </data>
+  <data name="ActiveServerSet" xml:space="preserve">
+    <value>已切换当前服务器。</value>
+    <comment>Active server updated message</comment>
+  </data>
+  <data name="ServerSavedSuccess" xml:space="preserve">
+    <value>服务器保存成功。</value>
+    <comment>Server saved success message</comment>
+  </data>
+  <data name="ServerDeletedSuccess" xml:space="preserve">
+    <value>服务器删除成功。</value>
+    <comment>Server deleted success message</comment>
+  </data>
+  <data name="ConfirmDeleteServerMessage" xml:space="preserve">
+    <value>确定要删除此服务器吗？</value>
+    <comment>Server delete confirmation message</comment>
+  </data>
+  <data name="NoServersConfigured" xml:space="preserve">
+    <value>尚未配置服务器。</value>
+    <comment>No servers configured message</comment>
+  </data>
+  <data name="EnableServer" xml:space="preserve">
+    <value>启用服务器</value>
+    <comment>Enable server tooltip</comment>
+  </data>
+  <data name="DisableServer" xml:space="preserve">
+    <value>停用服务器</value>
+    <comment>Disable server tooltip</comment>
+  </data>
+  <data name="ServerToggleFailed" xml:space="preserve">
+    <value>更新服务器状态失败。</value>
+    <comment>Server toggle failed message</comment>
+  </data>
+  <data name="ServerNotFound" xml:space="preserve">
+    <value>未找到服务器。</value>
+    <comment>Server not found message</comment>
+  </data>
+  <data name="ServerDeleteFailed" xml:space="preserve">
+    <value>无法删除服务器。</value>
+    <comment>Server deletion failed message</comment>
+  </data>
   
   <!-- Language -->
   <data name="Language" xml:space="preserve">

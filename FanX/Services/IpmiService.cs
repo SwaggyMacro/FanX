@@ -25,12 +25,12 @@ public class IpmiService
         }
     }
 
-    private async Task<(bool success, string output, string error)> ExecuteIpmiToolAsync(string command)
+    private async Task<(bool success, string output, string error)> ExecuteIpmiToolAsync(string command, IpmiConfig? config = null)
     {
         using var scope = _scopeFactory.CreateScope();
         var configService = scope.ServiceProvider.GetRequiredService<IpmiConfigService>();
         
-        var config = await configService.GetConfigAsync();
+        config ??= await configService.GetActiveConfigAsync();
         if (string.IsNullOrWhiteSpace(config.Host) || string.IsNullOrWhiteSpace(config.Username) || string.IsNullOrWhiteSpace(config.Password))
         {
             const string errorMsg = "IPMI configuration is not set.";
@@ -83,21 +83,21 @@ public class IpmiService
         }
     }
 
-    public async Task<(bool success, string output, string error)> GetSdrListAsync()
+    public async Task<(bool success, string output, string error)> GetSdrListAsync(IpmiConfig? config = null)
     {
-        return await ExecuteIpmiToolAsync("sdr list");
+        return await ExecuteIpmiToolAsync("sdr list", config);
     }
 
-    public async Task<(bool success, string output, string error)> PowerControlAsync(string action)
+    public async Task<(bool success, string output, string error)> PowerControlAsync(string action, IpmiConfig? config = null)
     {
         if (action is not ("on" or "off" or "cycle" or "reset" or "status"))
         {
             return (false, string.Empty, "Invalid power action. Must be one of: on, off, cycle, reset, status.");
         }
-        return await ExecuteIpmiToolAsync($"power {action}");
+        return await ExecuteIpmiToolAsync($"power {action}", config);
     }
 
-    public async Task<(bool success, string output, string error)> SetFanModeAsync(string mode)
+    public async Task<(bool success, string output, string error)> SetFanModeAsync(string mode, IpmiConfig? config = null)
     {
         if (mode is not ("Standard" or "Full"))
         {
@@ -107,27 +107,27 @@ public class IpmiService
         // This is a common command for Dell servers. May need to be adapted for other vendors.
         // 0x00 = Standard, 0x01 = Full Speed
         var modeValue = mode == "Standard" ? "0x00" : "0x01";
-        return await ExecuteIpmiToolAsync($"raw 0x30 0xce 0x00 0x16 0x05 0x00 0x00 0x00 0x07 0x00 {modeValue}");
+        return await ExecuteIpmiToolAsync($"raw 0x30 0xce 0x00 0x16 0x05 0x00 0x00 0x00 0x07 0x00 {modeValue}", config);
     }
-    
-    public async Task<(bool success, string output, string error)> SetAllFansSpeedAsync(int speedPercent)
+     
+    public async Task<(bool success, string output, string error)> SetAllFansSpeedAsync(int speedPercent, IpmiConfig? config = null)
     {
         if (speedPercent is < 0 or > 100)
         {
             return (false, string.Empty, "Invalid fan speed percentage. Must be between 0 and 100.");
         }
         
-        var (manualSuccess, _, manualError) = await SetManualFanControlAsync();
+        var (manualSuccess, _, manualError) = await SetManualFanControlAsync(config);
         if (!manualSuccess)
         {
             return (false, string.Empty, $"Failed to set fan control to manual: {manualError}");
         }
 
         var hexSpeed = speedPercent.ToString("X2");
-        return await ExecuteIpmiToolAsync($"raw 0x30 0x30 0x02 0xff 0x{hexSpeed}");
+        return await ExecuteIpmiToolAsync($"raw 0x30 0x30 0x02 0xff 0x{hexSpeed}", config);
     }
 
-    public async Task<(bool success, string output, string error)> SetIndividualFanSpeedAsync(string fanIdHex, int speedPercent)
+    public async Task<(bool success, string output, string error)> SetIndividualFanSpeedAsync(string fanIdHex, int speedPercent, IpmiConfig? config = null)
     {
         if (speedPercent is < 0 or > 100)
         {
@@ -135,17 +135,17 @@ public class IpmiService
         }
         
         var hexSpeed = speedPercent.ToString("X2");
-        return await ExecuteIpmiToolAsync($"raw 0x30 0x30 0x02 {fanIdHex} 0x{hexSpeed}");
+        return await ExecuteIpmiToolAsync($"raw 0x30 0x30 0x02 {fanIdHex} 0x{hexSpeed}", config);
     }
 
-    public async Task<(bool success, string output, string error)> SetManualFanControlAsync()
+    public async Task<(bool success, string output, string error)> SetManualFanControlAsync(IpmiConfig? config = null)
     {
-        return await ExecuteIpmiToolAsync("raw 0x30 0x30 0x01 0x00");
+        return await ExecuteIpmiToolAsync("raw 0x30 0x30 0x01 0x00", config);
     }
-    
-    public async Task<(bool success, string output, string error)> SetAutomaticFanControlAsync()
+     
+    public async Task<(bool success, string output, string error)> SetAutomaticFanControlAsync(IpmiConfig? config = null)
     {
-        return await ExecuteIpmiToolAsync("raw 0x30 0x30 0x01 0x01");
+        return await ExecuteIpmiToolAsync("raw 0x30 0x30 0x01 0x01", config);
     }
     
     public IEnumerable<SensorData> ParseFullSdrOutput(string output)

@@ -12,7 +12,7 @@ namespace FanX.Services
             _dbService = dbService;
         }
 
-        public async Task<List<FanControlRule>> GetRulesAsync()
+        public async Task<List<FanControlRule>> GetRulesAsync(int? ipmiConfigId = null)
         {
             var rules = await _dbService.Db.Queryable<FanControlRule>()
                 .OrderBy(r => r.SortOrder)
@@ -24,6 +24,13 @@ namespace FanX.Services
             {
                 rule.Conditions = allConditions.Where(c => c.RuleId == rule.Id).ToList();
                 rule.TargetFanNames = JsonSerializer.Deserialize<List<string>>(rule.TargetFanNamesJson) ?? [];
+                rule.TargetIpmiConfigIds = string.IsNullOrWhiteSpace(rule.TargetIpmiConfigIdsJson)
+                    ? []
+                    : JsonSerializer.Deserialize<List<int>>(rule.TargetIpmiConfigIdsJson) ?? [];
+            }
+            if (ipmiConfigId.HasValue)
+            {
+                return rules.Where(r => r.TargetIpmiConfigIds.Count == 0 || r.TargetIpmiConfigIds.Contains(ipmiConfigId.Value)).ToList();
             }
             return rules;
         }
@@ -35,6 +42,9 @@ namespace FanX.Services
             {
                 rule.Conditions = await _dbService.Db.Queryable<FanControlCondition>().Where(c => c.RuleId == id).ToListAsync();
                 rule.TargetFanNames = JsonSerializer.Deserialize<List<string>>(rule.TargetFanNamesJson) ?? [];
+                rule.TargetIpmiConfigIds = string.IsNullOrWhiteSpace(rule.TargetIpmiConfigIdsJson)
+                    ? []
+                    : JsonSerializer.Deserialize<List<int>>(rule.TargetIpmiConfigIdsJson) ?? [];
             }
             return rule;
         }
@@ -46,6 +56,8 @@ namespace FanX.Services
                 await _dbService.Db.Ado.BeginTranAsync();
 
                 rule.TargetFanNamesJson = JsonSerializer.Serialize(rule.TargetFanNames);
+                rule.TargetIpmiConfigIds ??= [];
+                rule.TargetIpmiConfigIdsJson = JsonSerializer.Serialize(rule.TargetIpmiConfigIds);
 
                 if (rule.Id == 0)
                 {
