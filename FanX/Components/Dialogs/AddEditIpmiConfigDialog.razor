@@ -50,6 +50,12 @@
         if (ConfigId != 0)
         {
             _config = await IpmiConfigService.GetConfigByIdAsync(ConfigId);
+            if (_config.Id == 0)
+            {
+                Snackbar.Add(LocalizationService.GetLocalizedString("ServerNotFound"), Severity.Error);
+                MudDialog.Cancel();
+                return;
+            }
         }
 
         _isNew = _config.Id == 0;
@@ -84,7 +90,12 @@
 
         if (result == true)
         {
-            await IpmiConfigService.DeleteConfigAsync(_config.Id);
+            var deleted = await IpmiConfigService.DeleteConfigAsync(_config.Id);
+            if (!deleted)
+            {
+                Snackbar.Add(LocalizationService.GetLocalizedString("ServerDeleteFailed"), Severity.Error);
+                return;
+            }
             MudDialog.Close(DialogResult.Ok(new IpmiConfigDialogResult { ConfigId = _config.Id, Deleted = true }));
         }
     }

@@ -248,6 +248,14 @@
     <value>尚未配置服务器。</value>
     <comment>No servers configured message</comment>
   </data>
+  <data name="ServerNotFound" xml:space="preserve">
+    <value>未找到服务器。</value>
+    <comment>Server not found message</comment>
+  </data>
+  <data name="ServerDeleteFailed" xml:space="preserve">
+    <value>无法删除服务器。</value>
+    <comment>Server deletion failed message</comment>
+  </data>
   
   <!-- Language -->
   <data name="Language" xml:space="preserve">

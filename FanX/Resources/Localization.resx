@@ -255,6 +255,14 @@
     <value>No servers configured yet.</value>
     <comment>No servers configured message</comment>
   </data>
+  <data name="ServerNotFound" xml:space="preserve">
+    <value>Server not found.</value>
+    <comment>Server not found message</comment>
+  </data>
+  <data name="ServerDeleteFailed" xml:space="preserve">
+    <value>Unable to delete server.</value>
+    <comment>Server deletion failed message</comment>
+  </data>
   <data name="RuleOrderUpdated" xml:space="preserve">
     <value>Rule order updated.</value>
     <comment>Snackbar message after updating rule order</comment>
