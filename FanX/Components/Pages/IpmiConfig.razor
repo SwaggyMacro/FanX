@@ -110,7 +110,7 @@
             return;
         }
 
-        _config = _configs.FirstOrDefault(c => c.Id == configId) ?? await IpmiConfigService.GetConfigByIdAsync(configId);
+        _config = _configs.FirstOrDefault(c => c.Id == configId) ?? new FanX.Models.IpmiConfig();
         if (_config.Id != 0)
         {
             await IpmiConfigService.SetActiveConfigAsync(_config.Id);

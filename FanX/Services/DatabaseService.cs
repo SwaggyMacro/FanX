@@ -104,9 +104,10 @@ namespace FanX.Services
 
                 if (!_db.Queryable<AppSetting>().Any(s => s.Key == "ActiveIpmiConfigId"))
                 {
-                    var defaultConfig = _db.Queryable<IpmiConfig>().OrderBy(c => c.Id).First();
-                    if (defaultConfig != null)
+                    var configQuery = _db.Queryable<IpmiConfig>();
+                    if (configQuery.Any())
                     {
+                        var defaultConfig = configQuery.OrderBy(c => c.Id).First();
                         _db.Insertable(new AppSetting
                         {
                             Key = "ActiveIpmiConfigId",
