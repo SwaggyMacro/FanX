@@ -47,9 +47,17 @@ public class IpmiConfigService
             config = await _dbService.Db.Queryable<IpmiConfig>().InSingleAsync(activeId.Value);
         }
 
+        if (config != null && !config.IsEnabled)
+        {
+            config = null;
+        }
+
         if (config == null)
         {
-            config = await _dbService.Db.Queryable<IpmiConfig>().OrderBy(c => c.Id).FirstAsync();
+            config = await _dbService.Db.Queryable<IpmiConfig>()
+                .Where(c => c.IsEnabled)
+                .OrderBy(c => c.Id)
+                .FirstAsync();
             if (config != null)
             {
                 await SetActiveConfigAsync(config.Id);
@@ -81,5 +89,11 @@ public class IpmiConfigService
             config.Id = await _dbService.Db.Insertable(config).ExecuteReturnIdentityAsync();
         }
         return config;
+    }
+
+    public async Task<bool> DeleteConfigAsync(int configId)
+    {
+        var deleted = await _dbService.Db.Deleteable<IpmiConfig>().In(configId).ExecuteCommandAsync();
+        return deleted > 0;
     }
 } 

@@ -223,6 +223,38 @@
     <value>Leave empty to apply to all enabled servers.</value>
     <comment>Target servers helper text</comment>
   </data>
+  <data name="AddServer" xml:space="preserve">
+    <value>Add Server</value>
+    <comment>Add server button text</comment>
+  </data>
+  <data name="EditServer" xml:space="preserve">
+    <value>Edit Server</value>
+    <comment>Edit server dialog title</comment>
+  </data>
+  <data name="SetActiveServer" xml:space="preserve">
+    <value>Set Active</value>
+    <comment>Set active server action</comment>
+  </data>
+  <data name="ActiveServerSet" xml:space="preserve">
+    <value>Active server updated.</value>
+    <comment>Active server updated message</comment>
+  </data>
+  <data name="ServerSavedSuccess" xml:space="preserve">
+    <value>Server saved successfully.</value>
+    <comment>Server saved success message</comment>
+  </data>
+  <data name="ServerDeletedSuccess" xml:space="preserve">
+    <value>Server deleted successfully.</value>
+    <comment>Server deleted success message</comment>
+  </data>
+  <data name="ConfirmDeleteServerMessage" xml:space="preserve">
+    <value>Are you sure you want to delete this server?</value>
+    <comment>Server delete confirmation message</comment>
+  </data>
+  <data name="NoServersConfigured" xml:space="preserve">
+    <value>No servers configured yet.</value>
+    <comment>No servers configured message</comment>
+  </data>
   <data name="RuleOrderUpdated" xml:space="preserve">
     <value>Rule order updated.</value>
     <comment>Snackbar message after updating rule order</comment>

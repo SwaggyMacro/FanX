@@ -2,6 +2,7 @@
 @attribute [Authorize(Roles = "Admin")]
 @using FanX.Resources
 @inject IpmiConfigService IpmiConfigService
+@inject IDialogService DialogService
 @inject ISnackbar Snackbar
 @inject LocalizationService LocalizationService
 @inject SensorDataService SensorDataService
@@ -9,50 +10,48 @@
 
 <PageTitle>@Localization.IpmiConfiguration</PageTitle>
 <MudCard>
-    <MudCardHeader>
-        <CardHeaderContent>
+    <MudTable Items="_configs" Hover="true" Striped="true" Dense="true">
+        <ToolBarContent>
             <MudText Typo="Typo.h6">@Localization.IpmiConfiguration</MudText>
-        </CardHeaderContent>
-    </MudCardHeader>
-    <MudCardContent>
-        <EditForm Model="@_config" OnValidSubmit="HandleValidSubmit">
-            <DataAnnotationsValidator />
-            <MudGrid>
-                <MudItem xs="12" sm="6">
-                    <MudSelect T="int" Label="@LocalizationService.GetLocalizedString("Server")" Value="_selectedConfigId" ValueChanged="OnConfigChanged">
-                        @foreach (var config in _configs)
-                        {
-                            <MudSelectItem Value="@config.Id">@GetConfigLabel(config)</MudSelectItem>
-                        }
-                        <MudSelectItem Value="@NewConfigId">@LocalizationService.GetLocalizedString("NewServer")</MudSelectItem>
-                    </MudSelect>
-                </MudItem>
-                <MudItem xs="12" sm="6">
-                    <MudTextField Label="@LocalizationService.GetLocalizedString("ServerName")" @bind-Value="_config.Name" For="@(() => _config.Name)" />
-                </MudItem>
-                <MudItem xs="12" sm="6">
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" role="switch"
-                               checked="@_config.IsEnabled"
-                               @onchange="e => { if (e.Value is bool val) { _config.IsEnabled = val; StateHasChanged(); } }" />
-                        <label class="form-check-label" style="margin-left:1rem;">@Localization.Enabled</label>
-                    </div>
-                </MudItem>
-                <MudItem xs="12">
-                    <MudTextField Label="@Localization.HostnameOrIpAddress" @bind-Value="_config.Host" For="@(() => _config.Host)" />
-                </MudItem>
-                <MudItem xs="12">
-                    <MudTextField Label="@Localization.Username" @bind-Value="_config.Username" For="@(() => _config.Username)" />
-                </MudItem>
-                <MudItem xs="12">
-                    <MudTextField Label="@Localization.Password" @bind-Value="_config.Password" For="@(() => _config.Password)" InputType="InputType.Password" />
-                </MudItem>
-            </MudGrid>
-            <MudCardActions>
-                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto" StartIcon="@Icons.Material.Filled.Save">@Localization.SaveConfiguration</MudButton>
-            </MudCardActions>
-        </EditForm>
-    </MudCardContent>
+            <MudSpacer />
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="@(() => OpenConfigDialog(0))">
+                @LocalizationService.GetLocalizedString("AddServer")
+            </MudButton>
+        </ToolBarContent>
+        <HeaderContent>
+            <MudTh>@Localization.Active</MudTh>
+            <MudTh>@LocalizationService.GetLocalizedString("ServerName")</MudTh>
+            <MudTh>@Localization.HostnameOrIpAddress</MudTh>
+            <MudTh>@Localization.Username</MudTh>
+            <MudTh>@Localization.Enabled</MudTh>
+            <MudTh>@Localization.Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="@Localization.Active">
+                @if (context.Id == _activeConfigId)
+                {
+                    <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" />
+                }
+                else
+                {
+                    <MudIconButton Icon="@Icons.Material.Filled.RadioButtonUnchecked"
+                                   Disabled="!context.IsEnabled"
+                                   Title="@LocalizationService.GetLocalizedString("SetActiveServer")"
+                                   OnClick="@(() => SetActiveConfig(context))" />
+                }
+            </MudTd>
+            <MudTd DataLabel="@LocalizationService.GetLocalizedString("ServerName")">@GetServerName(context)</MudTd>
+            <MudTd DataLabel="@Localization.HostnameOrIpAddress">@context.Host</MudTd>
+            <MudTd DataLabel="@Localization.Username">@context.Username</MudTd>
+            <MudTd DataLabel="@Localization.Enabled">@GetEnabledLabel(context)</MudTd>
+            <MudTd DataLabel="@Localization.Actions">
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" OnClick="@(() => OpenConfigDialog(context.Id))" />
+            </MudTd>
+        </RowTemplate>
+        <NoRecordsContent>
+            <MudText>@LocalizationService.GetLocalizedString("NoServersConfigured")</MudText>
+        </NoRecordsContent>
+    </MudTable>
 </MudCard>
 
 @code {
@@ -64,81 +63,73 @@
     {
         LocalizationService.OnLanguageChanged -= StateHasChanged;
     }
-    private FanX.Models.IpmiConfig _config = new();
     private List<FanX.Models.IpmiConfig> _configs = [];
-    private int _selectedConfigId = NewConfigId;
-    private const int NewConfigId = 0;
+    private int _activeConfigId;
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadConfigsAsync();
+    }
+
+    private async Task LoadConfigsAsync()
+    {
         _configs = await IpmiConfigService.GetConfigsAsync();
-        _config = await IpmiConfigService.GetConfigAsync();
-        _selectedConfigId = _config.Id == 0 ? NewConfigId : _config.Id;
+        var activeConfig = await IpmiConfigService.GetActiveConfigAsync();
+        _activeConfigId = activeConfig.Id;
     }
 
-    private async Task HandleValidSubmit()
+    private async Task OpenConfigDialog(int configId)
     {
-        _config = await IpmiConfigService.SaveConfigAsync(_config);
-        if (_configs.All(c => c.Id != _config.Id))
+        var parameters = new DialogParameters
         {
-            _configs.Add(_config);
-        }
-        else
+            ["ConfigId"] = configId
+        };
+        var title = configId == 0
+            ? LocalizationService.GetLocalizedString("AddServer")
+            : LocalizationService.GetLocalizedString("EditServer");
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small };
+        var dialogRef = await DialogService.ShowAsync<AddEditIpmiConfigDialog>(title, parameters, options);
+        var result = await dialogRef.Result;
+        if (result is { Canceled: false, Data: AddEditIpmiConfigDialog.IpmiConfigDialogResult dialogResult })
         {
-            var index = _configs.FindIndex(c => c.Id == _config.Id);
-            if (index >= 0)
+            if (dialogResult.Deleted)
             {
-                _configs[index] = _config;
+                Snackbar.Add(LocalizationService.GetLocalizedString("ServerDeletedSuccess"), Severity.Success);
             }
-        }
-        _selectedConfigId = _config.Id;
-        await IpmiConfigService.SetActiveConfigAsync(_config.Id);
-        // Clear sensor cache and notify success immediately
-        SensorDataService.ClearCache();
-        Snackbar.Add(Localization.SaveConfigurationSuccess, Severity.Success);
-        // Preload sensors in background; show error if loading fails
-        _ = PreloadSensorsBackground();
-    }
-
-    private async Task PreloadSensorsBackground()
-    {
-        var sensors = await SensorDataService.GetSensorsAsync();
-        if (!sensors.Any())
-        {
-            Snackbar.Add(Localization.FailedToLoadSensorList, Severity.Error);
+            else if (dialogResult.Config != null)
+            {
+                if (dialogResult.Config.IsEnabled)
+                {
+                    await IpmiConfigService.SetActiveConfigAsync(dialogResult.Config.Id);
+                }
+                Snackbar.Add(LocalizationService.GetLocalizedString("ServerSavedSuccess"), Severity.Success);
+            }
+            SensorDataService.ClearCache();
+            await LoadConfigsAsync();
         }
     }
 
-    private async Task OnConfigChanged(int configId)
+    private async Task SetActiveConfig(FanX.Models.IpmiConfig config)
     {
-        _selectedConfigId = configId;
-        if (configId == NewConfigId)
+        if (!config.IsEnabled)
         {
-            _config = new FanX.Models.IpmiConfig { IsEnabled = true };
+            Snackbar.Add(Localization.Disabled, Severity.Warning);
             return;
         }
 
-        _config = _configs.FirstOrDefault(c => c.Id == configId) ?? new FanX.Models.IpmiConfig();
-        if (_config.Id != 0)
-        {
-            await IpmiConfigService.SetActiveConfigAsync(_config.Id);
-            SensorDataService.ClearCache();
-        }
+        await IpmiConfigService.SetActiveConfigAsync(config.Id);
+        _activeConfigId = config.Id;
+        SensorDataService.ClearCache();
+        Snackbar.Add(LocalizationService.GetLocalizedString("ActiveServerSet"), Severity.Success);
     }
 
-    private string GetConfigLabel(FanX.Models.IpmiConfig config)
+    private string GetServerName(FanX.Models.IpmiConfig config)
     {
-        if (!string.IsNullOrWhiteSpace(config.Name))
-        {
-            return config.IsEnabled ? config.Name : $"{config.Name} ({LocalizationService.GetLocalizedString("Disabled")})";
-        }
+        return string.IsNullOrWhiteSpace(config.Name) ? "-" : config.Name;
+    }
 
-        if (!string.IsNullOrWhiteSpace(config.Host))
-        {
-            return config.IsEnabled ? config.Host : $"{config.Host} ({LocalizationService.GetLocalizedString("Disabled")})";
-        }
-
-        var label = $"{LocalizationService.GetLocalizedString("Server")} {config.Id}";
-        return config.IsEnabled ? label : $"{label} ({LocalizationService.GetLocalizedString("Disabled")})";
+    private string GetEnabledLabel(FanX.Models.IpmiConfig config)
+    {
+        return config.IsEnabled ? Localization.Enabled : Localization.Disabled;
     }
 }
