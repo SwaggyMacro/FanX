@@ -29,6 +29,9 @@
             </MudGrid>
             <MudDivider Class="my-4" />
             <MudText Typo="Typo.h6" Class="mb-3">Performance Settings</MudText>
+            <MudAlert Severity="Severity.Info" Class="mb-3">
+                Changes to performance settings will take effect on the next page load or after restarting the application.
+            </MudAlert>
             <MudGrid Class="mb-4">
                 <MudItem xs="12" sm="6">
                     <MudNumericField T="int" 
@@ -130,7 +133,10 @@
             await AppSettingService.SetSettingAsync("IpmiPollingIntervalSeconds", _ipmiPollingIntervalSeconds.ToString());
             await AppSettingService.SetSettingAsync("DashboardChartRefreshSeconds", _dashboardChartRefreshSeconds.ToString());
             
-            Snackbar.Add(Localization.SettingsSavedSuccess + " Please reload the page for changes to take effect.", Severity.Success);
+            Snackbar.Add(Localization.SettingsSavedSuccess, Severity.Success, config =>
+            {
+                config.VisibleStateDuration = 5000;
+            });
         }
         catch (Exception)
         {

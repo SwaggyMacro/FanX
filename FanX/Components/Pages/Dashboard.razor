@@ -338,13 +338,32 @@
                 });
             });
             
-            _timer = new Timer(async void (_) => await InvokeAsync(LoadLiveDataOnly), null, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5));
+            _timer = new Timer(_ => 
+            {
+                try
+                {
+                    _ = InvokeAsync(LoadLiveDataOnly);
+                }
+                catch (Exception ex)
+                {
+                    LoggerService.Error("Error in live data timer callback", ex);
+                }
+            }, null, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5));
             
             // Setup chart refresh timer if enabled
             if (_chartRefreshIntervalSeconds > 0)
             {
-                _chartRefreshTimer = new Timer(async void (_) => await InvokeAsync(RefreshChartData), null, 
-                    TimeSpan.FromSeconds(_chartRefreshIntervalSeconds), 
+                _chartRefreshTimer = new Timer(_ => 
+                {
+                    try
+                    {
+                        _ = InvokeAsync(RefreshChartData);
+                    }
+                    catch (Exception ex)
+                    {
+                        LoggerService.Error("Error in chart refresh timer callback", ex);
+                    }
+                }, null, TimeSpan.FromSeconds(_chartRefreshIntervalSeconds), 
                     TimeSpan.FromSeconds(_chartRefreshIntervalSeconds));
             }
         }

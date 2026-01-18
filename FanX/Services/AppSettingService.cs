@@ -23,10 +23,19 @@ namespace FanX.Services
                 }
 
                 // Load from database
-                var setting = await _databaseService.Db.Queryable<Models.AppSetting>()
-                    .FirstAsync(s => s.Key == key);
-
-                var value = setting?.Value ?? defaultValue;
+                var settingExists = await _databaseService.Db.Queryable<Models.AppSetting>()
+                    .Where(s => s.Key == key)
+                    .AnyAsync();
+                
+                string? value = defaultValue;
+                if (settingExists)
+                {
+                    var setting = await _databaseService.Db.Queryable<Models.AppSetting>()
+                        .Where(s => s.Key == key)
+                        .FirstAsync();
+                    value = setting?.Value ?? defaultValue;
+                }
+                
                 _cache[key] = value;
                 return value;
             }
@@ -47,11 +56,15 @@ namespace FanX.Services
             await _semaphore.WaitAsync();
             try
             {
-                var existing = await _databaseService.Db.Queryable<Models.AppSetting>()
-                    .FirstAsync(s => s.Key == key);
+                var exists = await _databaseService.Db.Queryable<Models.AppSetting>()
+                    .Where(s => s.Key == key)
+                    .AnyAsync();
 
-                if (existing != null)
+                if (exists)
                 {
+                    var existing = await _databaseService.Db.Queryable<Models.AppSetting>()
+                        .Where(s => s.Key == key)
+                        .FirstAsync();
                     existing.Value = value;
                     await _databaseService.Db.Updateable(existing).ExecuteCommandAsync();
                 }
