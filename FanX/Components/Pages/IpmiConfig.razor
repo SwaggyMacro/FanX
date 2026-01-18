@@ -6,6 +6,7 @@
 @inject ISnackbar Snackbar
 @inject LocalizationService LocalizationService
 @inject SensorDataService SensorDataService
+@inject ILogger<FanX.Components.Pages.IpmiConfig> Logger
 @implements IDisposable
 
 <PageTitle>@Localization.IpmiConfiguration</PageTitle>
@@ -130,21 +131,15 @@
     private async Task ToggleConfigEnabled(FanX.Models.IpmiConfig config)
     {
         var desiredState = !config.IsEnabled;
-        var updatedConfig = new FanX.Models.IpmiConfig
-        {
-            Id = config.Id,
-            Name = config.Name,
-            Host = config.Host,
-            Username = config.Username,
-            Password = config.Password,
-            IsEnabled = desiredState
-        };
+        var updatedConfig = config.Clone();
+        updatedConfig.IsEnabled = desiredState;
         try
         {
             await IpmiConfigService.SaveConfigAsync(updatedConfig);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            Logger.LogError(ex, "Failed to update server {ConfigId} enabled state.", config.Id);
             Snackbar.Add(LocalizationService.GetLocalizedString("ServerToggleFailed"), Severity.Error);
             return;
         }
