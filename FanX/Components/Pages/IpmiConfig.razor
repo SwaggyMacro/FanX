@@ -75,7 +75,9 @@
     {
         _configs = await IpmiConfigService.GetConfigsAsync();
         var activeConfig = await IpmiConfigService.GetActiveConfigAsync();
-        _activeConfigId = activeConfig.Id;
+        _activeConfigId = activeConfig.Id == 0
+            ? _configs.FirstOrDefault(c => c.IsEnabled)?.Id ?? 0
+            : activeConfig.Id;
     }
 
     private async Task OpenConfigDialog(int configId)

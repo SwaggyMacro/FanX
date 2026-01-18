@@ -63,7 +63,12 @@
 
     private async Task SaveConfig()
     {
-        await _form!.Validate();
+        if (_form == null)
+        {
+            return;
+        }
+
+        await _form.Validate();
         if (!_success)
         {
             Snackbar.Add(Localization.FixValidationErrors, Severity.Warning);

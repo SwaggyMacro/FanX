@@ -54,10 +54,11 @@ public class IpmiConfigService
 
         if (config == null)
         {
-            config = await _dbService.Db.Queryable<IpmiConfig>()
-                .Where(c => c.IsEnabled)
-                .OrderBy(c => c.Id)
-                .FirstAsync();
+            var enabledQuery = _dbService.Db.Queryable<IpmiConfig>().Where(c => c.IsEnabled);
+            if (await enabledQuery.AnyAsync())
+            {
+                config = await enabledQuery.OrderBy(c => c.Id).FirstAsync();
+            }
             if (config != null)
             {
                 await SetActiveConfigAsync(config.Id);
