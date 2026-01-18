@@ -9,8 +9,6 @@ services:
     volumes:
       - /docker/fanX/data:/app/data
       - /docker/fanX/logs:/app/logs
-      - /etc/timezone:/etc/timezone:ro
-      - /etc/localtime:/etc/localtime:ro
     environment:
       - FanX_PORT=5136
     restart: unless-stopped
