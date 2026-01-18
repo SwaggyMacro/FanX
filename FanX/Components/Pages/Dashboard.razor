@@ -191,14 +191,21 @@
     <MudItem xs="12">
         <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
             <MudText Typo="Typo.h6">Historical Data</MudText>
-            <MudSelect T="int" Value="_selectedTimeRange" ValueChanged="OnTimeRangeChanged" 
-                      Label="Chart Time Range" Variant="Variant.Outlined" Margin="Margin.Dense" Disabled="_isChartLoading">
-                <MudSelectItem Value="1">@string.Format(Localization.LastHours, 1)</MudSelectItem>
-                <MudSelectItem Value="6">@string.Format(Localization.LastHours, 6)</MudSelectItem>
-                <MudSelectItem Value="24">@string.Format(Localization.LastHours, 24)</MudSelectItem>
-                <MudSelectItem Value="168">@string.Format(Localization.LastDays, 7)</MudSelectItem>
-                <MudSelectItem Value="720">@string.Format(Localization.LastDays, 30)</MudSelectItem>
-            </MudSelect>
+            <MudStack Row="true" Spacing="2">
+                <MudIconButton Icon="@Icons.Material.Filled.Refresh" 
+                              Color="MudBlazor.Color.Primary" 
+                              OnClick="ManualRefreshCharts"
+                              Disabled="_isChartLoading"
+                              Title="Refresh Charts" />
+                <MudSelect T="int" Value="_selectedTimeRange" ValueChanged="OnTimeRangeChanged" 
+                          Label="Chart Time Range" Variant="Variant.Outlined" Margin="Margin.Dense" Disabled="_isChartLoading">
+                    <MudSelectItem Value="1">@string.Format(Localization.LastHours, 1)</MudSelectItem>
+                    <MudSelectItem Value="6">@string.Format(Localization.LastHours, 6)</MudSelectItem>
+                    <MudSelectItem Value="24">@string.Format(Localization.LastHours, 24)</MudSelectItem>
+                    <MudSelectItem Value="168">@string.Format(Localization.LastDays, 7)</MudSelectItem>
+                    <MudSelectItem Value="720">@string.Format(Localization.LastDays, 30)</MudSelectItem>
+                </MudSelect>
+            </MudStack>
         </MudStack>
     </MudItem>
 </MudGrid>
@@ -295,9 +302,12 @@
     // Performance optimization variables
     private int _selectedTimeRange = 24; // Hours
     private DateTime _lastDataUpdate = DateTime.MinValue;
+    private DateTime _lastChartUpdate = DateTime.MinValue;
     private readonly Dictionary<int, List<ChartDataPoint>> _chartDataCache = new();
     private const int MaxChartPoints = 150;
     private int _chartRefreshIntervalSeconds = 0; // 0 = disabled
+    private int _liveDataRefreshCount = 0;
+    private const int ChartRefreshEveryNLiveUpdates = 12; // Refresh charts every 12 live updates (60 seconds if live updates every 5 seconds)
 
     protected override void OnInitialized()
     {
@@ -417,11 +427,24 @@
                 .Where(s => s.Timestamp == latestTimestamp)
                 .ToListAsync();
 
-            _liveCpuData = latestData.Where(d => d.SensorType == "Temperature").ToList();
-            _liveFanData = latestData.Where(d => d.SensorType == "Fan" && d.SensorName != "Fan Redundancy").ToList();
-            _livePowerData = latestData.FirstOrDefault(d => d.SensorName == "Pwr Consumption");
+            // Only update if we got actual data
+            if (latestData != null && latestData.Any())
+            {
+                var newCpuData = latestData.Where(d => d.SensorType == "Temperature").ToList();
+                var newFanData = latestData.Where(d => d.SensorType == "Fan" && d.SensorName != "Fan Redundancy").ToList();
+                var newPowerData = latestData.FirstOrDefault(d => d.SensorName == "Pwr Consumption");
+
+                // Only update if we have new data, otherwise keep old data
+                if (newCpuData.Any() || newFanData.Any() || newPowerData != null)
+                {
+                    if (newCpuData.Any()) _liveCpuData = newCpuData;
+                    if (newFanData.Any()) _liveFanData = newFanData;
+                    if (newPowerData != null) _livePowerData = newPowerData;
+                    _hasDataEverLoaded = true;
+                }
+            }
+            
             _isLiveDataLoading = false;
-            _hasDataEverLoaded = true;
 
             // Refresh statistics periodically
             if (DateTime.Now - _lastDataUpdate > TimeSpan.FromMinutes(1))
@@ -431,6 +454,19 @@
                     await LoadStatistics();
                     _lastDataUpdate = DateTime.Now;
                     await InvokeAsync(StateHasChanged);
+                });
+            }
+
+            // Auto-refresh charts periodically (every 60 seconds by default)
+            _liveDataRefreshCount++;
+            if (_liveDataRefreshCount >= ChartRefreshEveryNLiveUpdates && 
+                DateTime.Now - _lastChartUpdate > TimeSpan.FromSeconds(55))
+            {
+                _liveDataRefreshCount = 0;
+                _ = Task.Run(async () =>
+                {
+                    await RefreshChartData();
+                    _lastChartUpdate = DateTime.Now;
                 });
             }
         }
@@ -661,6 +697,16 @@
         {
             LoggerService.Error("Failed to refresh chart data", ex);
         }
+    }
+
+    private async Task ManualRefreshCharts()
+    {
+        _isChartLoading = true;
+        StateHasChanged();
+        await RefreshChartData();
+        _isChartLoading = false;
+        _lastChartUpdate = DateTime.Now;
+        StateHasChanged();
     }
 
     public void Dispose()
