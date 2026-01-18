@@ -263,6 +263,10 @@
     <value>Disable server</value>
     <comment>Disable server tooltip</comment>
   </data>
+  <data name="ServerToggleFailed" xml:space="preserve">
+    <value>Failed to update server status.</value>
+    <comment>Server toggle failed message</comment>
+  </data>
   <data name="ServerNotFound" xml:space="preserve">
     <value>Server not found.</value>
     <comment>Server not found message</comment>

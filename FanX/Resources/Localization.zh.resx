@@ -256,6 +256,10 @@
     <value>停用服务器</value>
     <comment>Disable server tooltip</comment>
   </data>
+  <data name="ServerToggleFailed" xml:space="preserve">
+    <value>更新服务器状态失败。</value>
+    <comment>Server toggle failed message</comment>
+  </data>
   <data name="ServerNotFound" xml:space="preserve">
     <value>未找到服务器。</value>
     <comment>Server not found message</comment>

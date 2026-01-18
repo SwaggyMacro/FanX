@@ -100,18 +100,20 @@
             if (dialogResult.Deleted)
             {
                 await HandleDeleteSuccessAsync();
-                return;
             }
-            if (dialogResult.Config != null)
+            else
             {
-                if (dialogResult.Config.IsEnabled)
+                if (dialogResult.Config != null)
                 {
-                    await IpmiConfigService.SetActiveConfigAsync(dialogResult.Config.Id);
+                    if (dialogResult.Config.IsEnabled)
+                    {
+                        await IpmiConfigService.SetActiveConfigAsync(dialogResult.Config.Id);
+                    }
+                    Snackbar.Add(LocalizationService.GetLocalizedString("ServerSavedSuccess"), Severity.Success);
                 }
-                Snackbar.Add(LocalizationService.GetLocalizedString("ServerSavedSuccess"), Severity.Success);
+                SensorDataService.ClearCache();
+                await LoadConfigsAsync();
             }
-            SensorDataService.ClearCache();
-            await LoadConfigsAsync();
         }
     }
 
@@ -131,8 +133,18 @@
 
     private async Task ToggleConfigEnabled(FanX.Models.IpmiConfig config)
     {
-        config.IsEnabled = !config.IsEnabled;
-        await IpmiConfigService.SaveConfigAsync(config);
+        var desiredState = !config.IsEnabled;
+        config.IsEnabled = desiredState;
+        try
+        {
+            await IpmiConfigService.SaveConfigAsync(config);
+        }
+        catch
+        {
+            config.IsEnabled = !desiredState;
+            Snackbar.Add(LocalizationService.GetLocalizedString("ServerToggleFailed"), Severity.Error);
+            return;
+        }
         SensorDataService.ClearCache();
         await LoadConfigsAsync();
     }
