@@ -108,8 +108,7 @@
                     await IpmiConfigService.SetActiveConfigAsync(dialogResult.Config.Id);
                 }
                 Snackbar.Add(LocalizationService.GetLocalizedString("ServerSavedSuccess"), Severity.Success);
-                SensorDataService.ClearCache();
-                await LoadConfigsAsync();
+                await RefreshConfigsAsync();
             }
         }
     }
@@ -131,19 +130,25 @@
     private async Task ToggleConfigEnabled(FanX.Models.IpmiConfig config)
     {
         var desiredState = !config.IsEnabled;
-        config.IsEnabled = desiredState;
+        var updatedConfig = new FanX.Models.IpmiConfig
+        {
+            Id = config.Id,
+            Name = config.Name,
+            Host = config.Host,
+            Username = config.Username,
+            Password = config.Password,
+            IsEnabled = desiredState
+        };
         try
         {
-            await IpmiConfigService.SaveConfigAsync(config);
+            await IpmiConfigService.SaveConfigAsync(updatedConfig);
         }
         catch (Exception)
         {
-            config.IsEnabled = !desiredState;
             Snackbar.Add(LocalizationService.GetLocalizedString("ServerToggleFailed"), Severity.Error);
             return;
         }
-        SensorDataService.ClearCache();
-        await LoadConfigsAsync();
+        await RefreshConfigsAsync();
     }
 
     private async Task DeleteConfig(FanX.Models.IpmiConfig config)
@@ -176,11 +181,16 @@
         return config.IsEnabled ? Localization.Enabled : Localization.Disabled;
     }
 
+    private async Task RefreshConfigsAsync()
+    {
+        SensorDataService.ClearCache();
+        await LoadConfigsAsync();
+    }
+
     private async Task HandleDeleteSuccessAsync()
     {
         Snackbar.Add(LocalizationService.GetLocalizedString("ServerDeletedSuccess"), Severity.Success);
-        SensorDataService.ClearCache();
-        await LoadConfigsAsync();
+        await RefreshConfigsAsync();
     }
 
     private string GetToggleIcon(FanX.Models.IpmiConfig config)
