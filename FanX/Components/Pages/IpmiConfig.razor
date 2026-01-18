@@ -24,7 +24,6 @@
             <MudTh>@LocalizationService.GetLocalizedString("ServerName")</MudTh>
             <MudTh>@Localization.HostnameOrIpAddress</MudTh>
             <MudTh>@Localization.Username</MudTh>
-            <MudTh>@Localization.Enabled</MudTh>
             <MudTh>@Localization.Actions</MudTh>
         </HeaderContent>
         <RowTemplate>
@@ -44,7 +43,6 @@
             <MudTd DataLabel="@LocalizationService.GetLocalizedString("ServerName")">@GetServerName(context)</MudTd>
             <MudTd DataLabel="@Localization.HostnameOrIpAddress">@context.Host</MudTd>
             <MudTd DataLabel="@Localization.Username">@context.Username</MudTd>
-            <MudTd DataLabel="@Localization.Enabled">@GetEnabledLabel(context)</MudTd>
             <MudTd DataLabel="@Localization.Actions">
                 <MudIconButton Icon="@GetToggleIcon(context)"
                                Color="@GetToggleColor(context)"
@@ -169,11 +167,6 @@
     private string GetServerName(FanX.Models.IpmiConfig config)
     {
         return string.IsNullOrWhiteSpace(config.Name) ? "-" : config.Name;
-    }
-
-    private string GetEnabledLabel(FanX.Models.IpmiConfig config)
-    {
-        return config.IsEnabled ? Localization.Enabled : Localization.Disabled;
     }
 
     private async Task RefreshConfigsAsync()
