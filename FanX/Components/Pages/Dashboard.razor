@@ -442,11 +442,10 @@
             {
                 var newCpuData = latestData.Where(d => d.SensorType == "Temperature").ToList();
                 var newFanData = latestData.Where(d => d.SensorType == "Fan" && d.SensorName != "Fan Redundancy").ToList();
-                var newPowerData = latestData.FirstOrDefault(d => d.SensorName == "Pwr Consumption")
-                    ?? latestData.FirstOrDefault(d =>
-                        d.SensorType == "Power" &&
-                        string.Equals(d.Unit, "Watts", StringComparison.OrdinalIgnoreCase))
-                    ?? latestData.FirstOrDefault(d => d.SensorType == "Power");
+                var powerData = latestData.Where(d => d.SensorType == "Power").ToList();
+                var newPowerData = powerData.FirstOrDefault(d => d.SensorName == "Pwr Consumption")
+                    ?? powerData.FirstOrDefault(d => string.Equals(d.Unit, "Watts", StringComparison.OrdinalIgnoreCase))
+                    ?? powerData.FirstOrDefault();
 
                 // Only update if we have new data, otherwise keep old data
                 if (newCpuData.Any() || newFanData.Any() || newPowerData != null)
