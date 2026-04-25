@@ -241,7 +241,7 @@
                 {
                     <ApexChart TItem="ChartDataPoint" Options="_powerChartOptions" @ref="_powerChart">
                         <ApexPointSeries TItem="ChartDataPoint"
-                                         Items="@(_chartData.Where(d => d.N == "Pwr Consumption").ToList())"
+                                         Items="@(_chartData.Where(d => d.S == "Power").ToList())"
                                          Name="Power Consumption"
                                          XValue="@(item => item.T)"
                                          YValue="@(item => Convert.ToDecimal(item.V))"/>
@@ -442,7 +442,11 @@
             {
                 var newCpuData = latestData.Where(d => d.SensorType == "Temperature").ToList();
                 var newFanData = latestData.Where(d => d.SensorType == "Fan" && d.SensorName != "Fan Redundancy").ToList();
-                var newPowerData = latestData.FirstOrDefault(d => d.SensorName == "Pwr Consumption");
+                var newPowerData = latestData.FirstOrDefault(d => d.SensorName == "Pwr Consumption")
+                    ?? latestData.FirstOrDefault(d =>
+                        d.SensorType == "Power" &&
+                        string.Equals(d.Unit, "Watts", StringComparison.OrdinalIgnoreCase))
+                    ?? latestData.FirstOrDefault(d => d.SensorType == "Power");
 
                 // Only update if we have new data, otherwise keep old data
                 if (newCpuData.Any() || newFanData.Any() || newPowerData != null)
@@ -509,7 +513,7 @@
                            s.SensorName != null &&
                            (s.SensorType == "Temperature" || 
                             s.SensorType == "Fan" || 
-                            s.SensorName == "Pwr Consumption"));
+                            s.SensorType == "Power"));
             if (activeConfigId != 0)
             {
                 allDataQuery = allDataQuery.Where(s => s.IpmiConfigId == activeConfigId);
@@ -544,7 +548,7 @@
                 );
 
                 // Store in appropriate dictionary based on sensor type
-                if (sensorName == "Pwr Consumption")
+                if (sensorType == "Power")
                 {
                     _powerAverages = stats;
                 }
